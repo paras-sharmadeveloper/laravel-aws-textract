@@ -11,11 +11,11 @@ class TextractService
     public function __construct()
     {
         $this->client = new TextractClient([
-            'region' => env('AWS_DEFAULT_REGION'),
+            'region' => config('filesystems.disks.s3.region'),
             'version' => 'latest',
             'credentials' => [
-                'key' => env('AWS_ACCESS_KEY_ID'),
-                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                'key' => config('filesystems.disks.s3.key'),
+                'secret' => config('filesystems.disks.s3.secret'),
             ],
         ]);
     }
