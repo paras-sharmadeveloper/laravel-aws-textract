@@ -12,7 +12,7 @@ class GeoService
 
         $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
             'address' => $address,
-            'key' => env('GOOGLE_MAPS_API_KEY')
+            'key' => config('services.googlemap.api_key'),
         ]);
 
         if (!$response->successful()) return null;
