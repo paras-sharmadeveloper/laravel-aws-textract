@@ -42,5 +42,13 @@ return [
             'api_key' => env('Google_MAPS_API_KEY'),
 
     ],
+    'pipedrive' => [
+            'base_url' => env('PIPEDRIVE_BASE_URL'),
+            'api_key' => env('PIPEDRIVE_API_KEY'),
+            'owner_id' => env('PIPEDRIVE_OWNER_ID'),
+            'pipeline_id' => env('PIPEDRIVE_PIPELINE_ID'),
+            'stage_id' => env('PIPEDRIVE_STAGE_ID'),
+    ],
+
 
 ];

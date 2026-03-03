@@ -17,11 +17,11 @@ class PipedriveService
 
     public function __construct(S3Service $s3Service)
     {
-        $this->baseUrl   = env('PIPEDRIVE_BASE_URL');
-        $this->token     = env('PIPEDRIVE_API_KEY');
-        $this->ownerId   = env('PIPEDRIVE_OWNER_ID');
-        $this->pipelineId = env('PIPEDRIVE_PIPELINE_ID');
-        $this->stageId   = env('PIPEDRIVE_STAGE_ID');
+        $this->baseUrl   = config('services.pipedrive.base_url');
+        $this->token     = config('services.pipedrive.api_key');
+        $this->ownerId   = config('services.pipedrive.owner_id');
+        $this->pipelineId = config('services.pipedrive.pipeline_id');
+        $this->stageId   = config('services.pipedrive.stage_id');
         $this->s3Service = $s3Service;
     }
 
