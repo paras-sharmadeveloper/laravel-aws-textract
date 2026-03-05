@@ -82,6 +82,19 @@
 <body>
 
 <div class="card">
+
+@if(session('success'))
+    <div style="background:#d4edda;color:#155724;padding:10px;margin-bottom:10px;border-radius:5px;">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if(session('error'))
+    <div style="background:#f8d7da;color:#721c24;padding:10px;margin-bottom:10px;border-radius:5px;">
+        {{ session('error') }}
+    </div>
+@endif
+
     <h2>Document Processor Upload</h2>
 
     <form method="POST" action="/upload" enctype="multipart/form-data">

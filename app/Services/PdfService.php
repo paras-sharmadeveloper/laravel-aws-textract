@@ -21,31 +21,37 @@ class PdfService
     |--------------------------------------------------------------------------
     */
     public function imageToPdf($imagePath)
-    {
-        $image = $this->imageManager->read($imagePath);
+{
+    $image = $this->imageManager->read($imagePath);
 
-        $width  = $image->width();
-        $height = $image->height();
+    // resize large images
+    $image->scaleDown(2000);
 
-        $tempImage = tempnam(sys_get_temp_dir(), 'img') . '.jpg';
-        $image->toJpeg(90)->save($tempImage);
+    $width  = $image->width();
+    $height = $image->height();
 
-        $pdf = new Fpdi();
+    $tempImage = tempnam(sys_get_temp_dir(), 'img') . '.jpg';
+    $image->toJpeg(90)->save($tempImage);
 
-        // Convert px to mm roughly (1 px ≈ 0.264583 mm)
-        $pdfWidth  = $width * 0.264583;
-        $pdfHeight = $height * 0.264583;
+    $pdf = new Fpdi();
 
-        $pdf->AddPage('P', [$pdfWidth, $pdfHeight]);
-        $pdf->Image($tempImage, 0, 0, $pdfWidth, $pdfHeight);
+    $pdfWidth  = $width * 0.264583;
+    $pdfHeight = $height * 0.264583;
 
-        $outputPath = tempnam(sys_get_temp_dir(), 'pdf') . '.pdf';
-        $pdf->Output($outputPath, 'F');
+    $pdf->AddPage('P', [$pdfWidth, $pdfHeight]);
+    $pdf->Image($tempImage, 0, 0, $pdfWidth, $pdfHeight);
 
-        unlink($tempImage);
+    $temp = tempnam(sys_get_temp_dir(), 'pdf');
+    $outputPath = $temp . '.pdf';
 
-        return $outputPath;
-    }
+    rename($temp, $outputPath);
+
+    $pdf->Output('F', $outputPath);
+
+    unlink($tempImage);
+
+    return $outputPath;
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -73,10 +79,12 @@ class PdfService
                 $pdf->useTemplate($templateId);
             }
         }
+        $temp = tempnam(sys_get_temp_dir(), 'pdf');
+        $outputPath = $temp . '.pdf';
+        rename($temp, $outputPath);
 
-        $outputPath = tempnam(sys_get_temp_dir(), 'merged') . '.pdf';
-        $pdf->Output($outputPath, 'F');
-
+       // $outputPath = tempnam(sys_get_temp_dir(), 'merged') . '.pdf';
+        $pdf->Output('F', $outputPath);
         return $outputPath;
     }
 
