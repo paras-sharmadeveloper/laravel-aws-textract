@@ -61,34 +61,34 @@ class UploadController extends Controller
             //     'bank_statement' => 'Statement.pdf'
             // ];
 
-              $singleFields = [
+            $singleFields = [
                 'driving_license' => 'ID',
                 'bank_doc' => 'VC',
                 'tax_doc' => 'TaxID',
                 'bank_statement' => 'Statement'
             ];
 
-             foreach ($singleFields as $field => $name) {
+            foreach ($singleFields as $field => $name) {
 
-            if (!$request->hasFile($field)) {
-                continue;
+                if (!$request->hasFile($field)) {
+                    continue;
+                }
+
+                $file = $request->file($field);
+
+                $ext = $file->getClientOriginalExtension();
+
+                $finalName = $name . '.' . $ext;
+
+                $s3Key = $this->s3Service->uploadFile(
+                    $file->getRealPath(),
+                    "uploads/$dealFolder/$finalName"
+                );
+
+                $result['documents'][$finalName] = [
+                    's3_keys' => [$s3Key]
+                ];
             }
-
-            $file = $request->file($field);
-
-            $ext = $file->getClientOriginalExtension();
-
-            $finalName = $name . '.' . $ext;
-
-            $s3Key = $this->s3Service->uploadFile(
-                $file->getRealPath(),
-                "uploads/$dealFolder/$finalName"
-            );
-
-            $result['documents'][$finalName] = [
-                's3_keys' => [$s3Key]
-            ];
-        }
 
             /*
         |--------------------------------------------------------------------------
@@ -96,36 +96,36 @@ class UploadController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        // if ($request->hasFile('pictures')) {
+            // if ($request->hasFile('pictures')) {
 
-        //     $mergedPdfPath = $this->pdfService->mergeMixedFiles(
-        //         $request->file('pictures')
-        //     );
+            //     $mergedPdfPath = $this->pdfService->mergeMixedFiles(
+            //         $request->file('pictures')
+            //     );
 
-        //     if (!file_exists($mergedPdfPath)) {
-        //         throw new \Exception("Merged PDF not found");
-        //     }
+            //     if (!file_exists($mergedPdfPath)) {
+            //         throw new \Exception("Merged PDF not found");
+            //     }
 
-        //     // LOCAL STORAGE SAVE
-        //     $localPath = storage_path('app/debug/Pics.pdf');
+            //     // LOCAL STORAGE SAVE
+            //     $localPath = storage_path('app/debug/Pics.pdf');
 
-        //     if (!file_exists(dirname($localPath))) {
-        //         mkdir(dirname($localPath), 0777, true);
-        //     }
+            //     if (!file_exists(dirname($localPath))) {
+            //         mkdir(dirname($localPath), 0777, true);
+            //     }
 
-        //     copy($mergedPdfPath, $localPath);
+            //     copy($mergedPdfPath, $localPath);
 
-        //     \Log::info('LOCAL PDF SAVED', [
-        //         'temp_path' => $mergedPdfPath,
-        //         'local_path' => $localPath,
-        //         'size' => filesize($localPath)
-        //     ]);
+            //     \Log::info('LOCAL PDF SAVED', [
+            //         'temp_path' => $mergedPdfPath,
+            //         'local_path' => $localPath,
+            //         'size' => filesize($localPath)
+            //     ]);
 
-        //     return response()->json([
-        //         'message' => 'PDF saved locally',
-        //         'path' => $localPath
-        //     ]);
-        // }
+            //     return response()->json([
+            //         'message' => 'PDF saved locally',
+            //         'path' => $localPath
+            //     ]);
+            // }
 
 
 
@@ -136,7 +136,7 @@ class UploadController extends Controller
                     $request->file('pictures')
                 );
 
-                  $localPath = storage_path('app/debug/Pics.pdf');
+                $localPath = storage_path('app/debug/Pics.pdf');
 
                 if (!file_exists($mergedPdfPath) || filesize($mergedPdfPath) == 0) {
                     throw new \Exception("Merged pictures PDF invalid");

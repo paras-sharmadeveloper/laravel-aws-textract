@@ -30,11 +30,11 @@ class ProcessDocumentsJob implements ShouldQueue
     }
 
     public function handle(
-      TextractService $textract,
-    GPTService $gpt,
-    GeoService $geo,
-    PipedriveService $pipedrive,
-    PdfService $pdfService
+        TextractService $textract,
+        GPTService $gpt,
+        GeoService $geo,
+        PipedriveService $pipedrive,
+        PdfService $pdfService
 ) {
 
     try {
@@ -61,6 +61,8 @@ class ProcessDocumentsJob implements ShouldQueue
             }
 
             $doc['raw_text'] = $rawText;
+
+              \Log::error("raw_text", ['content' => $rawText]);
         }
 
         /*
@@ -73,12 +75,20 @@ class ProcessDocumentsJob implements ShouldQueue
             'email' => $this->result['email'],
             'phone' => $this->result['phone'],
             'documents' => [
-                'driver_license' => $this->result['documents']['ID.pdf'] ?? [],
-                'bank_document' => $this->result['documents']['VC.pdf'] ?? [],
-                'tax_document' => $this->result['documents']['TaxID.pdf'] ?? [],
-                'other_document' => $this->result['documents']['Statement.pdf'] ?? [],
+                'driver_license' => $this->getDocument('ID'),
+                'bank_document' => $this->getDocument('VC'),
+                'tax_document' => $this->getDocument('TaxID'),
+                'other_document' => $this->getDocument('Statement'),
             ]
+                        // 'documents' => [
+            //     'driver_license' => $this->result['documents']['ID.pdf'] ?? [],
+            //     'bank_document' => $this->result['documents']['VC.pdf'] ?? [],
+            //     'tax_document' => $this->result['documents']['TaxID.pdf'] ?? [],
+            //     'other_document' => $this->result['documents']['Statement.pdf'] ?? [],
+            // ]
         ];
+
+           \Log::error("gpt_payload", ['content' => $this->result]);
 
         /*
         |--------------------------------------------------------------------------
@@ -147,6 +157,16 @@ class ProcessDocumentsJob implements ShouldQueue
 private function generateS3Url($key)
 {
     return "https://" . env('AWS_BUCKET') . ".s3.amazonaws.com/" . $key;
+}
+
+private function getDocument($name)
+{
+    foreach ($this->result['documents'] as $key => $doc) {
+        if (str_starts_with($key, $name)) {
+            return $doc;
+        }
+    }
+    return [];
 }
 
     public function failed(Exception $exception)
