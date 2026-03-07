@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use setasign\Fpdi\Fpdi;
+use setasign\Fpdi\Tcpdf\Fpdi;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 
@@ -16,51 +16,104 @@ class PdfService
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | Convert Image to PDF (Preserve Aspect Ratio)
-    |--------------------------------------------------------------------------
+    |-------------------------------------------------------
+    | Convert Image to PDF
+    |-------------------------------------------------------
     */
+
     public function imageToPdf($imagePath)
-{
-    $image = $this->imageManager->read($imagePath);
+    {
+        $image = $this->imageManager->read($imagePath);
+          $image->scaleDown(2000);
 
-    // resize large images
-    $image->scaleDown(2000);
+        $width  = $image->width();
+        $height = $image->height();
 
-    $width  = $image->width();
-    $height = $image->height();
+        $tempImage = tempnam(sys_get_temp_dir(), 'img') . '.jpg';
+        $image->toJpeg(90)->save($tempImage);
 
-    $tempImage = tempnam(sys_get_temp_dir(), 'img') . '.jpg';
-    $image->toJpeg(90)->save($tempImage);
+        $pdf = new Fpdi();
 
-    $pdf = new Fpdi();
+        $pdf->SetPrintHeader(false);
+        $pdf->SetPrintFooter(false);
 
-    $pdfWidth  = $width * 0.264583;
-    $pdfHeight = $height * 0.264583;
+        // pixel → mm
+        $pdfWidth  = $width * 0.264583;
+        $pdfHeight = $height * 0.264583;
 
-    $pdf->AddPage('P', [$pdfWidth, $pdfHeight]);
-    $pdf->Image($tempImage, 0, 0, $pdfWidth, $pdfHeight);
+        // auto orientation
+        $orientation = $pdfWidth > $pdfHeight ? 'L' : 'P';
 
-    $temp = tempnam(sys_get_temp_dir(), 'pdf');
-    $outputPath = $temp . '.pdf';
+        $pdf->AddPage($orientation, [$pdfWidth, $pdfHeight]);
 
-    rename($temp, $outputPath);
+        $pdf->Image($tempImage, 0, 0, $pdfWidth, $pdfHeight);
 
-    $pdf->Output('F', $outputPath);
+        $output = tempnam(sys_get_temp_dir(), 'pdf') . '.pdf';
 
-    unlink($tempImage);
+        $pdf->Output($output, 'F');
 
-    return $outputPath;
-}
+        unlink($tempImage);
+
+        return $output;
+    }
+
+    // public function imageToPdf($imagePath)
+    // {
+    //     $image = $this->imageManager->read($imagePath);
+
+    //     $width  = $image->width();
+    //     $height = $image->height();
+
+    //     $tempImage = tempnam(sys_get_temp_dir(), 'img') . '.jpg';
+    //     $image->toJpeg(90)->save($tempImage);
+
+    //     $pdf = new Fpdi();
+
+    //     $pdf->SetPrintHeader(false);
+    //     $pdf->SetPrintFooter(false);
+
+
+    //     $pdf->AddPage('P', 'A4');
+
+    //     $pageWidth  = 210;
+    //     $pageHeight = 297;
+
+    //     $imgRatio = $width / $height;
+
+    //     $imgWidth = $pageWidth - 20; // margin
+    //     $imgHeight = $imgWidth / $imgRatio;
+
+    //     if ($imgHeight > ($pageHeight - 20)) {
+    //         $imgHeight = $pageHeight - 20;
+    //         $imgWidth = $imgHeight * $imgRatio;
+    //     }
+
+    //     $x = ($pageWidth - $imgWidth) / 2;
+    //     $y = ($pageHeight - $imgHeight) / 2;
+
+    //     $pdf->Image($tempImage, $x, $y, $imgWidth, $imgHeight);
+
+    //     $output = tempnam(sys_get_temp_dir(), 'pdf') . '.pdf';
+
+    //     $pdf->Output($output, 'F');
+
+    //     unlink($tempImage);
+
+    //     return $output;
+    // }
 
     /*
-    |--------------------------------------------------------------------------
-    | Merge Multiple PDFs
-    |--------------------------------------------------------------------------
+    |-------------------------------------------------------
+    | Merge PDFs
+    |-------------------------------------------------------
     */
+
     public function mergePdfs(array $pdfPaths)
     {
         $pdf = new Fpdi();
+
+        $pdf->SetPrintHeader(false);
+        $pdf->SetPrintFooter(false);
 
         foreach ($pdfPaths as $file) {
 
@@ -70,59 +123,55 @@ class PdfService
 
             $pageCount = $pdf->setSourceFile($file);
 
-            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+            for ($i = 1; $i <= $pageCount; $i++) {
 
-                $templateId = $pdf->importPage($pageNo);
-                $size = $pdf->getTemplateSize($templateId);
+                $template = $pdf->importPage($i);
+
+                $size = $pdf->getTemplateSize($template);
 
                 $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                $pdf->useTemplate($templateId);
+
+                $pdf->useTemplate($template);
             }
         }
-        $temp = tempnam(sys_get_temp_dir(), 'pdf');
-        $outputPath = $temp . '.pdf';
-        rename($temp, $outputPath);
 
-       // $outputPath = tempnam(sys_get_temp_dir(), 'merged') . '.pdf';
-        $pdf->Output('F', $outputPath);
-        return $outputPath;
+        $output = tempnam(sys_get_temp_dir(), 'merged') . '.pdf';
+
+
+
+        $pdf->Output($output, 'F');
+        \Log::info('PDF PATH 1', [
+            'path' => $output,
+            'size' => filesize($output)
+        ]);
+        return $output;
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | Merge Multiple Images
-    |--------------------------------------------------------------------------
-    */
-    public function mergeImages(array $images)
-    {
-        $pdfPaths = [];
-
-        foreach ($images as $image) {
-            $pdfPaths[] = $this->imageToPdf($image->getRealPath());
-        }
-
-        return $this->mergePdfs($pdfPaths);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
+    |-------------------------------------------------------
     | Merge Mixed Files
-    |--------------------------------------------------------------------------
+    |-------------------------------------------------------
     */
+
     public function mergeMixedFiles(array $files)
     {
         $pdfPaths = [];
 
         foreach ($files as $file) {
 
-            $extension = strtolower($file->getClientOriginalExtension());
+            $ext = strtolower($file->getClientOriginalExtension());
 
-            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+            if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
+
                 $pdfPaths[] = $this->imageToPdf($file->getRealPath());
-            } elseif ($extension === 'pdf') {
+            } elseif ($ext === 'pdf') {
+
                 $pdfPaths[] = $file->getRealPath();
             }
         }
+        \Log::info('PDF PATH 2', [
+            'path' => $pdfPaths,
+        ]);
 
         return $this->mergePdfs($pdfPaths);
     }
