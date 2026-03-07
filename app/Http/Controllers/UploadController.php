@@ -148,7 +148,7 @@ class UploadController extends Controller
                 ]);
 
 
-                copy($mergedPdfPath, $localPath);
+                // copy($mergedPdfPath, $localPath);
 
                 $s3Key = $this->s3Service->uploadFile(
                     $mergedPdfPath,
