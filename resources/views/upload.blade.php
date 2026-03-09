@@ -114,35 +114,35 @@
 
         <div class="form-group">
             <label>Drivers License or Passport *</label>
-            <input type="file" name="driving_license" accept=".pdf,.jpg,.jpeg,.png">
-            <small>PDF, JPG, PNG only • Max 10MB</small>
+            <input type="file" name="driving_license" accept=".pdf,.jpg,.jpeg,.png,.heic">
+            <small>PDF, JPG, PNG, HEIC only • Max 10MB</small>
         </div>
 
         <div class="form-group">
             <label>Voided Check / Bank Letter *</label>
-            <input type="file" name="bank_doc" accept=".pdf,.jpg,.jpeg,.png">
+            <input type="file" name="bank_doc" accept=".pdf,.jpg,.jpeg,.png,.heic">
         </div>
 
         <div class="form-group">
             <label>Tax Document</label>
-            <input type="file" name="tax_doc" accept=".pdf,.jpg,.jpeg,.png">
+            <input type="file" name="tax_doc" accept=".pdf,.jpg,.jpeg,.png,.heic">
         </div>
 
         <div class="form-group">
             <label>Bank / Processing Statement</label>
-            <input type="file" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png">
+            <input type="file" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png,.heic">
         </div>
 
         <hr>
 
         <div class="form-group">
             <label>Pictures (Multiple Allowed)</label>
-            <input type="file" name="pictures[]" multiple accept=".pdf,.jpg,.jpeg,.png">
+            <input type="file" name="pictures[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
         </div>
 
         <div class="form-group">
             <label>Other / Supporting Documents</label>
-            <input type="file" name="other_doc[]" multiple accept=".pdf,.jpg,.jpeg,.png">
+            <input type="file" name="other_doc[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
         </div>
 
         <button type="submit">Upload & Process</button>
