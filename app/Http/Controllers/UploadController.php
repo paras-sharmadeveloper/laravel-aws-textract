@@ -32,12 +32,12 @@ class UploadController extends Controller
             $request->validate([
                 'email' => 'required|email',
                 'phone' => 'required',
-                'driving_license' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
-                'bank_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
-                'tax_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
-                'bank_statement' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
-                'pictures.*' => 'nullable|file|mimes:jpg,jpeg,png|max:10240',
-                'other_doc.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
+                'driving_license' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
+                'bank_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
+                'tax_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
+                'bank_statement' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
+                'pictures.*' => 'nullable|file|mimes:jpg,jpeg,png,heic,heif|max:10240',
+                'other_doc.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
             ]);
 
             $dealFolder = $request->phone . '_' . Str::random(4);
