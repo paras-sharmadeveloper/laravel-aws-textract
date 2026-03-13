@@ -139,10 +139,10 @@ class UploadController extends Controller
             }
 
             /*
-        |--------------------------------------------------------------------------
-        | OTHER DOCUMENTS
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | OTHER DOCUMENTS
+            |--------------------------------------------------------------------------
+            */
 
             if ($request->hasFile('other_doc')) {
 
@@ -165,7 +165,7 @@ class UploadController extends Controller
                     's3_keys' => [$s3Key]
                 ];
 
-                unlink($mergedPdfPath); // cleanup
+                // unlink($mergedPdfPath); // cleanup
             }
 
             /*
@@ -173,7 +173,7 @@ class UploadController extends Controller
         | DISPATCH JOB
         |--------------------------------------------------------------------------
         */
-
+            Log::info("uploadme files ", ['file' => $result['documents']]);
             ProcessDocumentsJob::dispatch($result);
 
             return back()->with('success', 'Your documents have been uploaded successfully. Processing has started and the lead will be created within approximately 2 minutes.');
