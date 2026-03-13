@@ -41,13 +41,21 @@ class ProcessDocumentsJob implements ShouldQueue
 
             foreach ($this->result['documents'] as $docName => &$doc) {
 
-                $rawText = '';
 
+
+                // Skip OCR for pictures & supporting documents
+                if (
+                    str_starts_with($docName, 'Pics') ||
+                    str_starts_with($docName, 'SupportingDoc')
+                ) {
+                    continue;
+                }
+                $rawText = '';
                 foreach ($doc['s3_keys'] as $key) {
 
                     if (str_starts_with($docName, 'ID')) {
                         $rawText = $textract->analyzeID($key);
-                    } elseif (str_ends_with($key, '.pdf')) {
+                    } elseif (str_ends_with(strtolower($key), '.pdf')) {
 
                         $rawText .= $textract->extractPdf($key);
                     } else {
