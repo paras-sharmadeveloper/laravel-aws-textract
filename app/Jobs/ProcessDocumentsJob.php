@@ -99,8 +99,6 @@ class ProcessDocumentsJob implements ShouldQueue
 
             $unique = [];
 
-            $unique = [];
-
             foreach ($this->result['documents'] as $docName => $doc) {
 
                 Log::info("Process Document in Job", ['file' => $docName]);
