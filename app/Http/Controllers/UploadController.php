@@ -112,7 +112,8 @@ class UploadController extends Controller
                     $request->file('pictures')
                 );
 
-                $picnames = "Pics" . '_' . Str::random(5) . '.' . 'pdf';
+                // $picnames = "Pics" . '_' . Str::random(5) . '.' . 'pdf';
+                $picnames = "Pics.pdf";
                 if (!file_exists($mergedPdfPath) || filesize($mergedPdfPath) == 0) {
                     throw new \Exception("Merged pictures PDF invalid");
                 }
@@ -157,7 +158,8 @@ class UploadController extends Controller
                     'path' => $mergedPdfPath,
                     'size' => filesize($mergedPdfPath)
                 ]);
-                $supportingname = "SupportingDoc" . '_' . Str::random(5) . '.' . 'pdf';
+                $supportingname = "SupportingDoc.pdf";
+                // $supportingname = "SupportingDoc" . '_' . Str::random(5) . '.' . 'pdf';
                 $s3Key = $this->s3Service->uploadFile(
                     $mergedPdfPath,
                     "uploads/$dealFolder/$supportingname"
