@@ -146,6 +146,12 @@ class ProcessDocumentsJob implements ShouldQueue
 
             $parsedData['files'] = $filesPayload;
 
+            // Log::info("FILES PAYLOAD", $filesPayload);
+
+            \Log::error("parsed_data", ['content' => $parsedData]);
+
+            /*
+
             /*
         |--------------------------------------------------------------------------
         | 6️⃣ CREATE LEAD IN PIPEDRIVE
