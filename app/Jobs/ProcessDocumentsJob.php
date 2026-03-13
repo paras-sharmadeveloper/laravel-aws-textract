@@ -92,7 +92,7 @@ class ProcessDocumentsJob implements ShouldQueue
             $unique = [];
 
             foreach ($this->result['documents'] as $docName => $doc) {
-
+                Log::info("Process Document in Job", ['file' => $docName]);
                 foreach ($doc['s3_keys'] as $key) {
 
                     if (isset($unique[$key])) {
