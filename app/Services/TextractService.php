@@ -20,6 +20,22 @@ class TextractService
         ]);
     }
 
+    public function analyzeID($s3Key)
+    {
+        $result = $this->client->analyzeID([
+            'DocumentPages' => [
+                [
+                    'S3Object' => [
+                        'Bucket' => env('AWS_BUCKET'),
+                        'Name' => $s3Key
+                    ]
+                ]
+            ]
+        ]);
+
+        return $result;
+    }
+
     public function extractImage($s3Key)
     {
         $result = $this->client->detectDocumentText([

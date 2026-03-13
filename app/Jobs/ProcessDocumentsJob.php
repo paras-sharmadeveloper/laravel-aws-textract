@@ -35,139 +35,149 @@ class ProcessDocumentsJob implements ShouldQueue
         GeoService $geo,
         PipedriveService $pipedrive,
         PdfService $pdfService
-) {
+    ) {
 
-    try {
+        try {
 
-        Log::info("Job Started");
+            Log::info("Job Started");
 
-        /*
+            /*
         |--------------------------------------------------------------------------
         | 1️⃣ OCR FROM S3
         |--------------------------------------------------------------------------
         */
 
-        foreach ($this->result['documents'] as $docName => &$doc) {
+            foreach ($this->result['documents'] as $docName => &$doc) {
 
-            $rawText = '';
+                $rawText = '';
 
-            foreach ($doc['s3_keys'] as $key) {
+                foreach ($doc['s3_keys'] as $key) {
 
-                if (str_ends_with($key, '.pdf')) {
-                    $rawText .= $textract->extractPdf($key);
-                } else {
-                    $rawText .= $textract->extractImage($key);
+                    if (str_starts_with($docName, 'ID')) {
+
+                        $rawText = $textract->analyzeID($key);
+                    } elseif (str_ends_with($key, '.pdf')) {
+
+                        $rawText .= $textract->extractPdf($key);
+                    } else {
+
+                        $rawText .= $textract->extractImage($key);
+                    }
+
+                    // if (str_ends_with($key, '.pdf')) {
+                    //     $rawText .= $textract->extractPdf($key);
+                    // } else {
+                    //     $rawText .= $textract->extractImage($key);
+                    // }
                 }
+
+                $doc['raw_text'] = $rawText;
+
+                \Log::error("raw_text", ['content' => $rawText]);
             }
 
-            $doc['raw_text'] = $rawText;
-
-              \Log::error("raw_text", ['content' => $rawText]);
-        }
-
-        /*
+            /*
         |--------------------------------------------------------------------------
         | 2️⃣ PREPARE GPT PAYLOAD
         |--------------------------------------------------------------------------
         */
 
-        $gptPayload = [
-            'email' => $this->result['email'],
-            'phone' => $this->result['phone'],
-            'documents' => [
-                'driver_license' => $this->getDocument('ID'),
-                'bank_document' => $this->getDocument('VC'),
-                'tax_document' => $this->getDocument('TaxID'),
-                'other_document' => $this->getDocument('Statement'),
-            ]
-                        // 'documents' => [
-            //     'driver_license' => $this->result['documents']['ID.pdf'] ?? [],
-            //     'bank_document' => $this->result['documents']['VC.pdf'] ?? [],
-            //     'tax_document' => $this->result['documents']['TaxID.pdf'] ?? [],
-            //     'other_document' => $this->result['documents']['Statement.pdf'] ?? [],
-            // ]
-        ];
+            $gptPayload = [
+                'email' => $this->result['email'],
+                'phone' => $this->result['phone'],
+                'documents' => [
+                    'driver_license' => $this->getDocument('ID'),
+                    'bank_document' => $this->getDocument('VC'),
+                    'tax_document' => $this->getDocument('TaxID'),
+                    'other_document' => $this->getDocument('Statement'),
+                ]
+                // 'documents' => [
+                //     'driver_license' => $this->result['documents']['ID.pdf'] ?? [],
+                //     'bank_document' => $this->result['documents']['VC.pdf'] ?? [],
+                //     'tax_document' => $this->result['documents']['TaxID.pdf'] ?? [],
+                //     'other_document' => $this->result['documents']['Statement.pdf'] ?? [],
+                // ]
+            ];
 
-           \Log::error("gpt_payload", ['content' => $this->result]);
+            \Log::error("gpt_payload", ['content' => $this->result]);
 
-        /*
+            /*
         |--------------------------------------------------------------------------
         | 3️⃣ GPT PARSE
         |--------------------------------------------------------------------------
         */
 
-        $parsedData = $gpt->parse($gptPayload);
+            $parsedData = $gpt->parse($gptPayload);
 
-        /*
+            /*
         |--------------------------------------------------------------------------
         | 4️⃣ GEO CODE
         |--------------------------------------------------------------------------
         */
 
-        $homeGeo = $geo->geocode($parsedData['home_address'] ?? null, 'home');
-        if ($homeGeo) {
-            $parsedData = array_merge($parsedData, $homeGeo);
-        }
+            $homeGeo = $geo->geocode($parsedData['home_address'] ?? null, 'home');
+            if ($homeGeo) {
+                $parsedData = array_merge($parsedData, $homeGeo);
+            }
 
-        $businessGeo = $geo->geocode($parsedData['business_address'] ?? null, 'business');
-        if ($businessGeo) {
-            $parsedData = array_merge($parsedData, $businessGeo);
-        }
+            $businessGeo = $geo->geocode($parsedData['business_address'] ?? null, 'business');
+            if ($businessGeo) {
+                $parsedData = array_merge($parsedData, $businessGeo);
+            }
 
-        /*
+            /*
         |--------------------------------------------------------------------------
         | 5️⃣ ALIGN DATA FOR PIPEDRIVE
         |--------------------------------------------------------------------------
         */
 
-        $filesPayload = [];
+            $filesPayload = [];
 
-        foreach ($this->result['documents'] as $doc) {
-            foreach ($doc['s3_keys'] as $key) {
-                $filesPayload[] = [
-                    'file_name' => basename($key),
-                    's3_key' => $key,
-                    's3_url' => $this->generateS3Url($key),
-                ];
+            foreach ($this->result['documents'] as $doc) {
+                foreach ($doc['s3_keys'] as $key) {
+                    $filesPayload[] = [
+                        'file_name' => basename($key),
+                        's3_key' => $key,
+                        's3_url' => $this->generateS3Url($key),
+                    ];
+                }
             }
-        }
 
-        $parsedData['files'] = $filesPayload;
+            $parsedData['files'] = $filesPayload;
 
-        /*
+            /*
         |--------------------------------------------------------------------------
         | 6️⃣ CREATE LEAD IN PIPEDRIVE
         |--------------------------------------------------------------------------
         */
 
-        $ids = $pipedrive->processLead($parsedData);
+            $ids = $pipedrive->processLead($parsedData);
 
-        Log::info("Deal Created", ['deal_id' => $ids['deal_id']]);
+            Log::info("Deal Created", ['deal_id' => $ids['deal_id']]);
+        } catch (\Exception $e) {
 
-    } catch (\Exception $e) {
+            Log::error("Job Failed", [
+                'error' => $e->getMessage()
+            ]);
 
-        Log::error("Job Failed", [
-            'error' => $e->getMessage()
-        ]);
-
-        throw $e;
-    }
-}
-
-private function generateS3Url($key)
-{
-    return "https://" . env('AWS_BUCKET') . ".s3.amazonaws.com/" . $key;
-}
-
-private function getDocument($name)
-{
-    foreach ($this->result['documents'] as $key => $doc) {
-        if (str_starts_with($key, $name)) {
-            return $doc;
+            throw $e;
         }
     }
-    return [];
-}
+
+    private function generateS3Url($key)
+    {
+        return "https://" . env('AWS_BUCKET') . ".s3.amazonaws.com/" . $key;
+    }
+
+    private function getDocument($name)
+    {
+        foreach ($this->result['documents'] as $key => $doc) {
+            if (str_starts_with($key, $name)) {
+                return $doc;
+            }
+        }
+        return [];
+    }
 
     public function failed(Exception $exception)
     {
