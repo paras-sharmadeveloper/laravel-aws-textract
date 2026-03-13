@@ -146,17 +146,17 @@ class UploadController extends Controller
 
             if ($request->hasFile('other_doc')) {
 
-                $mergedPdfPath = $this->pdfService->mergeMixedFiles(
+                $mergedPdfPath2 = $this->pdfService->mergeMixedFiles(
                     $request->file('other_doc')
                 );
 
-                if (!file_exists($mergedPdfPath) || filesize($mergedPdfPath) == 0) {
+                if (!file_exists($mergedPdfPath2) || filesize($mergedPdfPath2) == 0) {
                     throw new \Exception("Merged other documents PDF invalid");
                 }
 
                 \Log::info('Merged Other Docs PDF', [
-                    'path' => $mergedPdfPath,
-                    'size' => filesize($mergedPdfPath)
+                    'path' => $mergedPdfPath2,
+                    'size' => filesize($mergedPdfPath2)
                 ]);
                 $supportingname = "SupportingDoc.pdf";
                 // $supportingname = "SupportingDoc" . '_' . Str::random(5) . '.' . 'pdf';
@@ -169,7 +169,7 @@ class UploadController extends Controller
                     's3_keys' => [$s3Key]
                 ];
 
-                unlink($mergedPdfPath); // cleanup
+                unlink($mergedPdfPath2); // cleanup
             }
 
             /*
