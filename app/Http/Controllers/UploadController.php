@@ -105,40 +105,6 @@ class UploadController extends Controller
         |--------------------------------------------------------------------------
         */
 
-            // if ($request->hasFile('pictures')) {
-
-            //     $mergedPdfPath = $this->pdfService->mergeMixedFiles(
-            //         $request->file('pictures')
-            //     );
-
-            //     if (!file_exists($mergedPdfPath)) {
-            //         throw new \Exception("Merged PDF not found");
-            //     }
-            //     $fiilenamee = "Pics" . '_' . Str::random(5) . '.' . 'pdf';
-
-            //     // LOCAL STORAGE SAVE
-            //     $localPath = storage_path('app/debug/' . $fiilenamee);
-
-            //     if (!file_exists(dirname($localPath))) {
-            //         mkdir(dirname($localPath), 0777, true);
-            //     }
-
-            //     copy($mergedPdfPath, $localPath);
-
-            //     \Log::info('LOCAL PDF SAVED', [
-            //         'temp_path' => $mergedPdfPath,
-            //         'local_path' => $localPath,
-            //         'size' => filesize($localPath)
-            //     ]);
-            //     unlink($mergedPdfPath); // cleanup temp file
-            //     // return response()->json([
-            //     //     'message' => 'PDF saved locally',
-            //     //     'path' => $localPath
-            //     // ]);
-            // }
-
-
-
 
             if ($request->hasFile('pictures')) {
 
@@ -146,7 +112,6 @@ class UploadController extends Controller
                     $request->file('pictures')
                 );
 
-                $localPath = storage_path('app/debug/Pics.pdf');
                 $fiilenamee = "Pics" . '_' . Str::random(5) . '.' . 'pdf';
                 if (!file_exists($mergedPdfPath) || filesize($mergedPdfPath) == 0) {
                     throw new \Exception("Merged pictures PDF invalid");
