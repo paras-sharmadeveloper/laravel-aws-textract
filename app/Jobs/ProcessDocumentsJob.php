@@ -127,24 +127,15 @@ class ProcessDocumentsJob implements ShouldQueue
             }
 
             /*
-        // |--------------------------------------------------------------------------
-        // | 5️⃣ ALIGN DATA FOR PIPEDRIVE
-        // |--------------------------------------------------------------------------
-        // */
+        |--------------------------------------------------------------------------
+        | 5️⃣ ALIGN DATA FOR PIPEDRIVE
+        |--------------------------------------------------------------------------
+        */
 
             $filesPayload = [];
-            $uniqueKeys = [];
 
             foreach ($this->result['documents'] as $doc) {
-
                 foreach ($doc['s3_keys'] as $key) {
-
-                    if (isset($uniqueKeys[$key])) {
-                        continue;
-                    }
-
-                    $uniqueKeys[$key] = true;
-
                     $filesPayload[] = [
                         'file_name' => basename($key),
                         's3_key' => $key,
@@ -154,20 +145,6 @@ class ProcessDocumentsJob implements ShouldQueue
             }
 
             $parsedData['files'] = $filesPayload;
-
-            //     $filesPayload = [];
-
-            //     foreach ($this->result['documents'] as $doc) {
-            //         foreach ($doc['s3_keys'] as $key) {
-            //             $filesPayload[] = [
-            //                 'file_name' => basename($key),
-            //                 's3_key' => $key,
-            //                 's3_url' => $this->generateS3Url($key),
-            //             ];
-            //         }
-            //     }
-
-            //     $parsedData['files'] = $filesPayload;
 
             /*
         |--------------------------------------------------------------------------

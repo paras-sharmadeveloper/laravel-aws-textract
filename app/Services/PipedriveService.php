@@ -242,18 +242,42 @@ class PipedriveService
         $orgId = $this->createOrganization($data);
         $dealId = $this->createDeal($data, $personId, $orgId);
 
+        $uploaded = [];
+
         foreach ($data['files'] ?? [] as $file) {
 
             if (!isset($file['s3_key'])) {
                 continue;
             }
 
+            $key = $file['s3_key'];
+
+            // Prevent duplicate uploads
+            if (isset($uploaded[$key])) {
+                continue;
+            }
+
+            $uploaded[$key] = true;
+
             $this->attachFileFromS3(
                 $dealId,
-                $file['s3_key'],
+                $key,
                 $file['file_name'] ?? 'document.pdf'
             );
         }
+
+        // foreach ($data['files'] ?? [] as $file) {
+
+        //     if (!isset($file['s3_key'])) {
+        //         continue;
+        //     }
+
+        //     $this->attachFileFromS3(
+        //         $dealId,
+        //         $file['s3_key'],
+        //         $file['file_name'] ?? 'document.pdf'
+        //     );
+        // }
 
         return [
             'person_id' => $personId,
