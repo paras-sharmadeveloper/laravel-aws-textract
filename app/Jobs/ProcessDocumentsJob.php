@@ -39,7 +39,7 @@ class ProcessDocumentsJob implements ShouldQueue
 
         try {
 
-            foreach ($this->result['documents'] as $docName => $doc) {
+            foreach ($this->result['documents'] as $docName => &$doc) {
 
 
 
