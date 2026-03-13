@@ -39,7 +39,7 @@ class ProcessDocumentsJob implements ShouldQueue
 
         try {
 
-            foreach ($this->result['documents'] as $docName => &$doc) {
+            foreach ($this->result['documents'] as $docName => $doc) {
 
 
 
@@ -99,15 +99,21 @@ class ProcessDocumentsJob implements ShouldQueue
 
             $unique = [];
 
+            $unique = [];
+
             foreach ($this->result['documents'] as $docName => $doc) {
+
                 Log::info("Process Document in Job", ['file' => $docName]);
+
                 foreach ($doc['s3_keys'] as $key) {
 
-                    if (isset($unique[$key])) {
+                    $uniqueKey = $docName . '_' . $key;
+
+                    if (isset($unique[$uniqueKey])) {
                         continue;
                     }
 
-                    $unique[$key] = true;
+                    $unique[$uniqueKey] = true;
 
                     $filesPayload[] = [
                         'file_name' => basename($key),
@@ -116,6 +122,24 @@ class ProcessDocumentsJob implements ShouldQueue
                     ];
                 }
             }
+
+            // foreach ($this->result['documents'] as $docName => $doc) {
+            //     Log::info("Process Document in Job", ['file' => $docName]);
+            //     foreach ($doc['s3_keys'] as $key) {
+
+            //         // if (isset($unique[$key])) {
+            //         //     continue;
+            //         // }
+
+            //         // $unique[$key] = true;
+
+            //         $filesPayload[] = [
+            //             'file_name' => basename($key),
+            //             's3_key' => $key,
+            //             's3_url' => $this->generateS3Url($key),
+            //         ];
+            //     }
+            // }
 
             $parsedData['files'] = $filesPayload;
             Log::info("FILES SENT TO PIPEDRIVE", $parsedData['files']);
