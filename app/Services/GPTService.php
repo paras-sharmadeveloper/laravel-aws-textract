@@ -25,6 +25,7 @@ class GPTService
             $response = $this->client->chat()->create([
                 'model' => 'gpt-4o-mini',
                 'temperature' => 0,
+                'response_format' => ['type' => 'json_object'],
                 'messages' => [
                     [
                         'role' => 'user',
@@ -37,8 +38,14 @@ class GPTService
 
             // Clean accidental markdown
             $content = trim($content);
+
+            // remove markdown
             $content = preg_replace('/^```json/', '', $content);
             $content = preg_replace('/```$/', '', $content);
+
+            // fix double braces
+            $content = preg_replace('/^\{\{/', '{', $content);
+            $content = preg_replace('/\}\}$/', '}', $content);
 
             $decoded = json_decode($content, true);
 

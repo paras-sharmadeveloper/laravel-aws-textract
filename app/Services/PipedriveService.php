@@ -243,44 +243,19 @@ class PipedriveService
 
         $uploaded = [];
 
-        foreach ($data['files'] ?? [] as $file) {
 
+        foreach ($data['files'] ?? [] as $file) {
+            Log::info("Processing file for attachment", ['file' => $file]);
             if (!isset($file['s3_key'])) {
                 continue;
             }
 
-            // Log::error("file uploading in pipedrive job", [
-            //     'content' => $file['file_name']
-            // ]);
-
-            $key = $file['s3_key'];
-
-            // Prevent duplicate uploads
-            if (isset($uploaded[$key])) {
-                continue;
-            }
-
-            $uploaded[$key] = true;
-
             $this->attachFileFromS3(
                 $dealId,
-                $key,
+                $file['s3_key'],
                 $file['file_name'] ?? 'document.pdf'
             );
         }
-
-        // foreach ($data['files'] ?? [] as $file) {
-
-        //     if (!isset($file['s3_key'])) {
-        //         continue;
-        //     }
-
-        //     $this->attachFileFromS3(
-        //         $dealId,
-        //         $file['s3_key'],
-        //         $file['file_name'] ?? 'document.pdf'
-        //     );
-        // }
 
         return [
             'person_id' => $personId,
