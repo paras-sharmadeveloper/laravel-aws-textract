@@ -155,7 +155,7 @@ class UploadController extends Controller
                 }
 
 
-                $supportingname = "SupportingDoc.pdf";
+                $supportingname = "supportingdoc.pdf";
                 $s3Key = $this->s3Service->uploadFile(
                     $mergedPdfPath,
                     "uploads/$dealFolder/$supportingname"
