@@ -179,9 +179,6 @@ class UploadController extends Controller
             return back()->with('success', 'Your documents have been uploaded successfully. Processing has started and the lead will be created within approximately 2 minutes.');
         } catch (\Exception $e) {
 
-            // \Log::error('Upload Error', [
-            //     'error' => $e->getMessage()
-            // ]);
 
             return back()->with('error',  $e->getMessage());
         }

@@ -39,14 +39,6 @@ class ProcessDocumentsJob implements ShouldQueue
 
         try {
 
-            Log::info("Job Started");
-
-            /*
-        |--------------------------------------------------------------------------
-        | 1️⃣ OCR FROM S3
-        |--------------------------------------------------------------------------
-        */
-
             foreach ($this->result['documents'] as $docName => &$doc) {
 
                 $rawText = '';
@@ -54,7 +46,6 @@ class ProcessDocumentsJob implements ShouldQueue
                 foreach ($doc['s3_keys'] as $key) {
 
                     if (str_starts_with($docName, 'ID')) {
-
                         $rawText = $textract->analyzeID($key);
                     } elseif (str_ends_with($key, '.pdf')) {
 
@@ -63,22 +54,11 @@ class ProcessDocumentsJob implements ShouldQueue
 
                         $rawText .= $textract->extractImage($key);
                     }
-
-                    // if (str_ends_with($key, '.pdf')) {
-                    //     $rawText .= $textract->extractPdf($key);
-                    // } else {
-                    //     $rawText .= $textract->extractImage($key);
-                    // }
                 }
 
                 $doc['raw_text'] = $rawText;
             }
 
-            /*
-        |--------------------------------------------------------------------------
-        | 2️⃣ PREPARE GPT PAYLOAD
-        |--------------------------------------------------------------------------
-        */
 
             $gptPayload = [
                 'email' => $this->result['email'],
@@ -129,9 +109,6 @@ class ProcessDocumentsJob implements ShouldQueue
                 }
             }
             $parsedData['files'] = $filesPayload;
-
-
-
             $ids = $pipedrive->processLead($parsedData);
         } catch (\Exception $e) {
 

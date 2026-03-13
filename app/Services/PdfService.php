@@ -24,7 +24,7 @@ class PdfService
     public function imageToPdf($imagePath)
     {
         $image = $this->imageManager->read($imagePath);
-          $image->scaleDown(2000);
+        // $image->scaleDown(2000);
 
         $width  = $image->width();
         $height = $image->height();
@@ -57,56 +57,6 @@ class PdfService
         return $output;
     }
 
-    // public function imageToPdf($imagePath)
-    // {
-    //     $image = $this->imageManager->read($imagePath);
-
-    //     $width  = $image->width();
-    //     $height = $image->height();
-
-    //     $tempImage = tempnam(sys_get_temp_dir(), 'img') . '.jpg';
-    //     $image->toJpeg(90)->save($tempImage);
-
-    //     $pdf = new Fpdi();
-
-    //     $pdf->SetPrintHeader(false);
-    //     $pdf->SetPrintFooter(false);
-
-
-    //     $pdf->AddPage('P', 'A4');
-
-    //     $pageWidth  = 210;
-    //     $pageHeight = 297;
-
-    //     $imgRatio = $width / $height;
-
-    //     $imgWidth = $pageWidth - 20; // margin
-    //     $imgHeight = $imgWidth / $imgRatio;
-
-    //     if ($imgHeight > ($pageHeight - 20)) {
-    //         $imgHeight = $pageHeight - 20;
-    //         $imgWidth = $imgHeight * $imgRatio;
-    //     }
-
-    //     $x = ($pageWidth - $imgWidth) / 2;
-    //     $y = ($pageHeight - $imgHeight) / 2;
-
-    //     $pdf->Image($tempImage, $x, $y, $imgWidth, $imgHeight);
-
-    //     $output = tempnam(sys_get_temp_dir(), 'pdf') . '.pdf';
-
-    //     $pdf->Output($output, 'F');
-
-    //     unlink($tempImage);
-
-    //     return $output;
-    // }
-
-    /*
-    |-------------------------------------------------------
-    | Merge PDFs
-    |-------------------------------------------------------
-    */
 
     public function mergePdfs(array $pdfPaths)
     {
@@ -140,10 +90,10 @@ class PdfService
 
 
         $pdf->Output($output, 'F');
-        \Log::info('PDF PATH 1', [
-            'path' => $output,
-            'size' => filesize($output)
-        ]);
+        // \Log::info('PDF PATH 1', [
+        //     'path' => $output,
+        //     'size' => filesize($output)
+        // ]);
         return $output;
     }
 
@@ -169,9 +119,9 @@ class PdfService
                 $pdfPaths[] = $file->getRealPath();
             }
         }
-        \Log::info('PDF PATH 2', [
-            'path' => $pdfPaths,
-        ]);
+        // \Log::info('PDF PATH 2', [
+        //     'path' => $pdfPaths,
+        // ]);
 
         return $this->mergePdfs($pdfPaths);
     }

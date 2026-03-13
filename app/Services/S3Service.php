@@ -21,10 +21,10 @@ class S3Service
         try {
             return Storage::disk('s3')->get($key);
         } catch (\Exception $e) {
-            \Log::error("S3 Get Error", [
-                'key' => $key,
-                'error' => $e->getMessage()
-            ]);
+            // \Log::error("S3 Get Error", [
+            //     'key' => $key,
+            //     'error' => $e->getMessage()
+            // ]);
             return null;
         }
     }

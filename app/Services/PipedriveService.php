@@ -87,7 +87,6 @@ class PipedriveService
             'address' => Str::title($data['business_address']) ?? null,
             'owner_id' => $this->ownerId,
             'visible_to' => 3,
-
             'a5caf4d8d131d8b6d965dc17a52d08de2d433bd9' => $data['identification_number'] ?? null,
             '87e4f8286776a95af868610d3c73af929b7da72f' => Str::title($data['bank_name']) ?? null,
             'd48c4347fce9119821fe599ca67daec5b2be614f' => $data['routing_number'] ?? null,
