@@ -86,8 +86,8 @@ class UploadController extends Controller
                 } else {
                     $filePath = $file->getRealPath();
                 }
-                $finalName = $name . '_' . Str::random(5) . '.' . $ext;
-                //$finalName = $name . '.' . $ext;
+                // $finalName = $name . '_' . Str::random(5) . '.' . $ext;
+                $finalName = $name . '.' . $ext;
 
                 $s3Key = $this->s3Service->uploadFile(
                     $filePath,
