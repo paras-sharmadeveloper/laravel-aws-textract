@@ -151,6 +151,11 @@ class PipedriveService
 
     public function attachFileFromS3($dealId, $s3Key, $fileName)
     {
+
+        Log::info("ATTACH FROM S3 START", [
+            'fileName' => $fileName,
+            's3Key' => $s3Key
+        ]);
         // Download file from S3
         $fileContent = $this->s3Service->getFileContent($s3Key);
 
@@ -164,14 +169,17 @@ class PipedriveService
         file_put_contents($tempPath, $fileContent);
 
         $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $uploadPath = $tempPath;
 
         // If image → convert to PDF
         if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
 
             $pdfPath = app(\App\Services\PdfService::class)->imageToPdf($tempPath);
 
-            $uploadPath = $pdfPath;
-            $fileName = pathinfo($fileName, PATHINFO_FILENAME) . '.pdf';
+            if ($pdfPath && file_exists($pdfPath)) {
+                $uploadPath = $pdfPath;
+                $fileName = pathinfo($fileName, PATHINFO_FILENAME) . '.pdf';
+            }
         } else {
 
             $uploadPath = $tempPath;
