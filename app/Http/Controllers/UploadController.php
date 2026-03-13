@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\ProcessDocumentsJob;
 use App\Services\S3Service;
 use App\Services\PdfService;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Imagick\Driver;
 
 class UploadController extends Controller
 {
@@ -55,7 +57,7 @@ class UploadController extends Controller
         */
 
             // $singleFields = [
-            //     'driving_license' => 'ID.pdf',
+            //     'driving_license' => 'ID.pdf',`
             //     'bank_doc' => 'VC.pdf',
             //     'tax_doc' => 'TaxID.pdf',
             //     'bank_statement' => 'Statement.pdf'
@@ -64,7 +66,7 @@ class UploadController extends Controller
             $singleFields = [
                 'driving_license' => 'ID',
                 'bank_doc' => 'VC',
-                'tax_doc' => 'TaxID',
+                'tax_doc' => 'TAX_ID',
                 'bank_statement' => 'Statement'
             ];
 
@@ -78,10 +80,17 @@ class UploadController extends Controller
 
                 $ext = $file->getClientOriginalExtension();
 
-                $finalName = $name . '.' . $ext;
+                if (in_array($ext, ['heic', 'heif'])) {
+                    $filePath = $this->convertHeicToJpg($file);
+                    $ext = 'jpg';
+                } else {
+                    $filePath = $file->getRealPath();
+                }
+                $finalName = $name . '_' . Str::random(5) . '.' . $ext;
+                //$finalName = $name . '.' . $ext;
 
                 $s3Key = $this->s3Service->uploadFile(
-                    $file->getRealPath(),
+                    $filePath,
                     "uploads/$dealFolder/$finalName"
                 );
 
@@ -210,7 +219,27 @@ class UploadController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            return back()->with('error', 'Something went wrong.');
+            return back()->with('error',  $e->getMessage());
         }
+    }
+
+    function convertHeicToJpg($file)
+    {
+        $ext = strtolower($file->getClientOriginalExtension());
+
+        if ($ext === 'heic' || $ext === 'heif') {
+
+            $manager = new ImageManager(new Driver());
+
+            $image = $manager->read($file->getRealPath());
+
+            $newPath = storage_path('app/tmp/' . uniqid() . '.jpg');
+
+            $image->toJpeg()->save($newPath);
+
+            return $newPath;
+        }
+
+        return $file->getRealPath();
     }
 }

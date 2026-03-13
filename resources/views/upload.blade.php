@@ -102,12 +102,12 @@
 
         <div class="form-group">
             <label>Email *</label>
-            <input type="email" name="email" required>
+            <input type="email" name="email" value="jjjasu@mmm.com" required>
         </div>
 
         <div class="form-group">
             <label>Phone *</label>
-            <input type="text" name="phone" required>
+            <input type="text" name="phone" value="<?=rand(1000000000,9999999999);?>" required>
         </div>
 
         <hr>
