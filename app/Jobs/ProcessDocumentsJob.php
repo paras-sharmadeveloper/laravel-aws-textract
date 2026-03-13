@@ -56,6 +56,7 @@ class ProcessDocumentsJob implements ShouldQueue
                     if (str_starts_with($docName, 'ID')) {
 
                         $rawText = $textract->analyzeID($key);
+                        \Log::error("ID PAYLOAD ", ['content' => $rawText]);
                     } elseif (str_ends_with($key, '.pdf')) {
 
                         $rawText .= $textract->extractPdf($key);
@@ -88,7 +89,7 @@ class ProcessDocumentsJob implements ShouldQueue
                 'documents' => [
                     'driver_license' => $this->getDocument('ID'),
                     'bank_document' => $this->getDocument('VC'),
-                    'tax_document' => $this->getDocument('TaxID'),
+                    'tax_document' => $this->getDocument('TAX_ID'),
                     'other_document' => $this->getDocument('Statement'),
                 ]
                 // 'documents' => [
