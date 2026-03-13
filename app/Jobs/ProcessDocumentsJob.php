@@ -46,7 +46,7 @@ class ProcessDocumentsJob implements ShouldQueue
                 // Skip OCR for pictures & supporting documents
                 if (
                     str_starts_with($docName, 'Pics') ||
-                    str_starts_with($docName, 'SupportingDoc')
+                    str_starts_with($docName, 'supportingdoc')
                 ) {
                     continue;
                 }
