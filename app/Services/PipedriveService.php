@@ -152,7 +152,7 @@ class PipedriveService
     public function attachFileFromS3($dealId, $s3Key, $fileName)
     {
 
-        Log::info("ATTACH FROM S3 START", [
+        Log::info("ATTACH FROM S3 START jj", [
             'fileName' => $fileName,
             's3Key' => $s3Key
         ]);
