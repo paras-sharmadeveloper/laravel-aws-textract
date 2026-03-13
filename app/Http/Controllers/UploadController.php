@@ -131,10 +131,10 @@ class UploadController extends Controller
                     'size' => filesize($localPath)
                 ]);
                 unlink($mergedPdfPath); // cleanup temp file
-                return response()->json([
-                    'message' => 'PDF saved locally',
-                    'path' => $localPath
-                ]);
+                // return response()->json([
+                //     'message' => 'PDF saved locally',
+                //     'path' => $localPath
+                // ]);
             }
 
 
