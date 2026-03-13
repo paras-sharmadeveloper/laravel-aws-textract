@@ -56,7 +56,6 @@ class ProcessDocumentsJob implements ShouldQueue
                     if (str_starts_with($docName, 'ID')) {
 
                         $rawText = $textract->analyzeID($key);
-                        \Log::error("ID PAYLOAD ", ['content' => $rawText]);
                     } elseif (str_ends_with($key, '.pdf')) {
 
                         $rawText .= $textract->extractPdf($key);
@@ -73,8 +72,6 @@ class ProcessDocumentsJob implements ShouldQueue
                 }
 
                 $doc['raw_text'] = $rawText;
-
-                \Log::error("raw_text", ['content' => $rawText]);
             }
 
             /*
@@ -92,29 +89,12 @@ class ProcessDocumentsJob implements ShouldQueue
                     'tax_document' => $this->getDocument('TAX_ID'),
                     'other_document' => $this->getDocument('Statement'),
                 ]
-                // 'documents' => [
-                //     'driver_license' => $this->result['documents']['ID.pdf'] ?? [],
-                //     'bank_document' => $this->result['documents']['VC.pdf'] ?? [],
-                //     'tax_document' => $this->result['documents']['TaxID.pdf'] ?? [],
-                //     'other_document' => $this->result['documents']['Statement.pdf'] ?? [],
-                // ]
+
             ];
 
-            \Log::error("gpt_payload", ['content' => $this->result]);
 
-            /*
-        |--------------------------------------------------------------------------
-        | 3️⃣ GPT PARSE
-        |--------------------------------------------------------------------------
-        */
 
             $parsedData = $gpt->parse($gptPayload);
-
-            /*
-        |--------------------------------------------------------------------------
-        | 4️⃣ GEO CODE
-        |--------------------------------------------------------------------------
-        */
 
             $homeGeo = $geo->geocode($parsedData['home_address'] ?? null, 'home');
             if ($homeGeo) {
@@ -126,11 +106,6 @@ class ProcessDocumentsJob implements ShouldQueue
                 $parsedData = array_merge($parsedData, $businessGeo);
             }
 
-            /*
-        |--------------------------------------------------------------------------
-        | 5️⃣ ALIGN DATA FOR PIPEDRIVE
-        |--------------------------------------------------------------------------
-        */
 
             $filesPayload = [];
 
@@ -153,25 +128,12 @@ class ProcessDocumentsJob implements ShouldQueue
                     ];
                 }
             }
-            \Log::info("FILES PAYLOAD", $filesPayload);
             $parsedData['files'] = $filesPayload;
 
-            /*
 
-            /*
-        |--------------------------------------------------------------------------
-        | 6️⃣ CREATE LEAD IN PIPEDRIVE
-        |--------------------------------------------------------------------------
-        */
 
             $ids = $pipedrive->processLead($parsedData);
-
-            Log::info("Deal Created", ['deal_id' => $ids['deal_id']]);
         } catch (\Exception $e) {
-
-            Log::error("Job Failed", [
-                'error' => $e->getMessage()
-            ]);
 
             throw $e;
         }

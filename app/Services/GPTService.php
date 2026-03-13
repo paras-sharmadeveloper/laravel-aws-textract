@@ -17,7 +17,7 @@ class GPTService
     public function parse(array $payload)
     {
 
-        \Log::error("Payload OCr GPT", ['content' => $payload]);
+        // \Log::error("Payload OCr GPT", ['content' => $payload]);
         $prompt = $this->buildPrompt($payload);
 
         try {
@@ -46,7 +46,7 @@ class GPTService
                 Log::error("GPT Invalid JSON", ['response' => $content]);
                 return [];
             }
-            \Log::error("decoded GPT", ['content' => $decoded]);
+            //\Log::error("decoded GPT", ['content' => $decoded]);
 
             return $decoded;
         } catch (\Exception $e) {

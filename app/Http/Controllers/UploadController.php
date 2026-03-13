@@ -118,10 +118,10 @@ class UploadController extends Controller
                     throw new \Exception("Merged pictures PDF invalid");
                 }
 
-                \Log::info('Merged Pics PDF', [
-                    'path' => $mergedPdfPath,
-                    'size' => filesize($mergedPdfPath)
-                ]);
+                // \Log::info('Merged Pics PDF', [
+                //     'path' => $mergedPdfPath,
+                //     'size' => filesize($mergedPdfPath)
+                // ]);
 
 
                 // copy($mergedPdfPath, $localPath);
@@ -154,12 +154,8 @@ class UploadController extends Controller
                     throw new \Exception("Merged other documents PDF invalid");
                 }
 
-                \Log::info('Merged Other Docs PDF', [
-                    'path' => $mergedPdfPath,
-                    'size' => filesize($mergedPdfPath)
-                ]);
+
                 $supportingname = "SupportingDoc.pdf";
-                // $supportingname = "SupportingDoc" . '_' . Str::random(5) . '.' . 'pdf';
                 $s3Key = $this->s3Service->uploadFile(
                     $mergedPdfPath,
                     "uploads/$dealFolder/$supportingname"
@@ -183,9 +179,9 @@ class UploadController extends Controller
             return back()->with('success', 'Your documents have been uploaded successfully. Processing has started and the lead will be created within approximately 2 minutes.');
         } catch (\Exception $e) {
 
-            \Log::error('Upload Error', [
-                'error' => $e->getMessage()
-            ]);
+            // \Log::error('Upload Error', [
+            //     'error' => $e->getMessage()
+            // ]);
 
             return back()->with('error',  $e->getMessage());
         }

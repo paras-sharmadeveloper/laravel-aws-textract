@@ -129,7 +129,7 @@ class PipedriveService
     public function attachFile($dealId, $filePath)
     {
         if (!file_exists($filePath)) {
-            \Log::error("File not found for attachment", ['path' => $filePath]);
+            // \Log::error("File not found for attachment", ['path' => $filePath]);
             return;
         }
 
@@ -143,9 +143,9 @@ class PipedriveService
         ]);
 
         if (!$response->successful()) {
-            \Log::error("Pipedrive File Upload Failed", [
-                'response' => $response->body()
-            ]);
+            // \Log::error("Pipedrive File Upload Failed", [
+            //     'response' => $response->body()
+            // ]);
         }
     }
 
@@ -250,9 +250,9 @@ class PipedriveService
                 continue;
             }
 
-            Log::error("file uploading in pipedrive job", [
-                'content' => $file['file_name']
-            ]);
+            // Log::error("file uploading in pipedrive job", [
+            //     'content' => $file['file_name']
+            // ]);
 
             $key = $file['s3_key'];
 
