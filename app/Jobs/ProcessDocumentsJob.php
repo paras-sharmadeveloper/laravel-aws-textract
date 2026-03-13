@@ -134,8 +134,18 @@ class ProcessDocumentsJob implements ShouldQueue
 
             $filesPayload = [];
 
-            foreach ($this->result['documents'] as $doc) {
+            $unique = [];
+
+            foreach ($this->result['documents'] as $docName => $doc) {
+
                 foreach ($doc['s3_keys'] as $key) {
+
+                    if (isset($unique[$key])) {
+                        continue;
+                    }
+
+                    $unique[$key] = true;
+
                     $filesPayload[] = [
                         'file_name' => basename($key),
                         's3_key' => $key,
@@ -143,12 +153,8 @@ class ProcessDocumentsJob implements ShouldQueue
                     ];
                 }
             }
-
+            \Log::info("FILES PAYLOAD", $filesPayload);
             $parsedData['files'] = $filesPayload;
-
-            // Log::info("FILES PAYLOAD", $filesPayload);
-
-            \Log::error("parsed_data", ['content' => $parsedData]);
 
             /*
 
