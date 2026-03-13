@@ -39,21 +39,14 @@ class ProcessDocumentsJob implements ShouldQueue
 
         try {
 
-            foreach ($this->result['documents'] as $docName => &$doc) {
+            foreach ($this->result['documents'] as $docName => $doc) {
 
-
-
-                // Skip OCR for pictures & supporting documents
-                if (
-                    str_starts_with($docName, 'Pics') ||
-                    str_starts_with($docName, 'supportingdoc')
-                ) {
-                    continue;
-                }
                 $rawText = '';
+
                 foreach ($doc['s3_keys'] as $key) {
 
                     if (str_starts_with($docName, 'ID')) {
+
                         $rawText = $textract->analyzeID($key);
                     } elseif (str_ends_with(strtolower($key), '.pdf')) {
 
@@ -64,8 +57,38 @@ class ProcessDocumentsJob implements ShouldQueue
                     }
                 }
 
-                $doc['raw_text'] = $rawText;
+                // IMPORTANT: write back to original array
+                $this->result['documents'][$docName]['raw_text'] = $rawText;
             }
+
+
+            // foreach ($this->result['documents'] as $docName => &$doc) {
+
+
+
+            //     // Skip OCR for pictures & supporting documents
+            //     if (
+            //         str_starts_with($docName, 'Pics') ||
+            //         str_starts_with($docName, 'supportingdoc')
+            //     ) {
+            //         continue;
+            //     }
+            //     $rawText = '';
+            //     foreach ($doc['s3_keys'] as $key) {
+
+            //         if (str_starts_with($docName, 'ID')) {
+            //             $rawText = $textract->analyzeID($key);
+            //         } elseif (str_ends_with(strtolower($key), '.pdf')) {
+
+            //             $rawText .= $textract->extractPdf($key);
+            //         } else {
+
+            //             $rawText .= $textract->extractImage($key);
+            //         }
+            //     }
+
+            //     $doc['raw_text'] = $rawText;
+            // }
 
 
             $gptPayload = [
@@ -105,13 +128,11 @@ class ProcessDocumentsJob implements ShouldQueue
 
                 foreach ($doc['s3_keys'] as $key) {
 
-                    $uniqueKey = $docName . '_' . $key;
-
-                    if (isset($unique[$uniqueKey])) {
+                    if (isset($unique[$key])) {
                         continue;
                     }
 
-                    $unique[$uniqueKey] = true;
+                    $unique[$key] = true;
 
                     $filesPayload[] = [
                         'file_name' => basename($key),
