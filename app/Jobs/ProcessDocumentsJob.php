@@ -116,7 +116,9 @@ class ProcessDocumentsJob implements ShouldQueue
                     ];
                 }
             }
+
             $parsedData['files'] = $filesPayload;
+            Log::info("FILES SENT TO PIPEDRIVE", $parsedData['files']);
             $ids = $pipedrive->processLead($parsedData);
         } catch (\Exception $e) {
 
