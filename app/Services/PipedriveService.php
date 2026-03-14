@@ -55,7 +55,7 @@ class PipedriveService
         $name = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
 
         $payload = [
-            'name' => $name ?: ($data['email'] ?? 'Unknown Lead'),
+            'name' => Str::title($name) ?: ($data['email'] ?? 'Unknown Lead'),
             'email' => $data['email'] ?? null,
             'phone' => $data['phone'] ?? null,
             'owner_id' => $this->ownerId,
@@ -81,13 +81,13 @@ class PipedriveService
         if (empty($data['business_name'])) {
             return null;
         }
-
+        $identificationNumber = str_replace('-', '', $data['identification_number'] ?? '');
         $payload = [
             'name' => Str::title($data['business_name']),
             'address' => Str::title($data['business_address']) ?? null,
             'owner_id' => $this->ownerId,
             'visible_to' => 3,
-            'a5caf4d8d131d8b6d965dc17a52d08de2d433bd9' => $data['identification_number'] ?? null,
+            'a5caf4d8d131d8b6d965dc17a52d08de2d433bd9' => $identificationNumber ?? null,
             '87e4f8286776a95af868610d3c73af929b7da72f' => Str::title($data['bank_name']) ?? null,
             'd48c4347fce9119821fe599ca67daec5b2be614f' => $data['routing_number'] ?? null,
             '7a749d6ff1cf7de4ecaa2ad3ffc8b35e1f1442a7' => $data['account_number'] ?? null,
@@ -106,7 +106,7 @@ class PipedriveService
         $title = ($data['business_name'] ?? $data['email'] ?? 'New Lead') . ' - Onboarding';
 
         $payload = [
-            'title' => $title,
+            'title' => Str::title($title),
             'status' => 'open',
             'stage_id' => $this->stageId,
             'pipeline_id' => $this->pipelineId,
