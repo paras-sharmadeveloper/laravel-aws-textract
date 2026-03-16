@@ -4,18 +4,24 @@
 <head>
     <title>Submit DPS Payments</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://assets.squarespace.com/universal/images-v6/damask/logo-dark.svg" rel="icon">
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
             background: #f4f6f9;
             margin: 0;
-            padding: 40px;
+            padding: 20px;
         }
 
         .card {
             background: white;
             max-width: 750px;
+            width: 100%;
             margin: auto;
             padding: 30px;
             border-radius: 10px;
@@ -23,46 +29,49 @@
         }
 
         h2 {
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             text-align: center;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         label {
             font-weight: 600;
             display: block;
             margin-bottom: 6px;
+            font-size: 14px;
         }
 
         input[type="text"],
         input[type="email"],
         input[type="file"] {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
+            font-size: 14px;
         }
 
         input[type="file"] {
-            padding: 6px;
+            padding: 8px;
         }
 
         small {
             color: #777;
+            font-size: 12px;
         }
 
         hr {
-            margin: 30px 0;
+            margin: 25px 0;
             border: none;
             border-top: 1px solid #eee;
         }
 
         button {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: #4a6cf7;
             color: white;
             border: none;
@@ -82,6 +91,37 @@
         p.font-size-14 {
             font-size: 13px;
             text-decoration: underline;
+        }
+
+        /* MOBILE */
+        @media (max-width:768px) {
+
+            body {
+                padding: 10px;
+            }
+
+            .card {
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            label {
+                font-size: 13px;
+            }
+
+            input {
+                font-size: 14px;
+            }
+
+            button {
+                font-size: 15px;
+                padding: 13px;
+            }
+
         }
     </style>
 </head>
@@ -103,7 +143,7 @@
         @endif
         <div style="text-align:center;margin-bottom:20px;">
             <img src="https://assets.squarespace.com/universal/images-v6/damask/logo-dark.svg" alt="Plaid"
-                width="120">
+                width="100" style="vertical-align:middle;margin-left:5px;border:0;height:auto;">
         </div>
         <div class="header" style="text-align:center;margin-bottom:30px;">
             <h2>Submit DPS Payments </h2>
