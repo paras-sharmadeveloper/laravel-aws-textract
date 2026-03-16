@@ -142,7 +142,7 @@
             </div>
         @endif
         <div style="text-align:center;margin-bottom:20px;">
-            <img src="{{ asset('logo.jpeg') }}" alt="Plaid" width="100"
+            <img src="{{ asset('logo.jpeg') }}" alt="Plaid" width="120"
                 style="vertical-align:middle;margin-left:5px;border:0;height:auto;">
         </div>
         <div class="header" style="text-align:center;margin-bottom:30px;">
