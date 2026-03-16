@@ -5,7 +5,7 @@
     <title>Submit DPS Payments</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://assets.squarespace.com/universal/images-v6/damask/logo-dark.svg" rel="icon">
+    <link href="{{ asset('logo.jpeg') }}" rel="icon">
     <style>
         * {
             box-sizing: border-box;
@@ -142,15 +142,12 @@
             </div>
         @endif
         <div style="text-align:center;margin-bottom:20px;">
-            <img src="https://assets.squarespace.com/universal/images-v6/damask/logo-dark.svg" alt="Plaid"
-                width="100" style="vertical-align:middle;margin-left:5px;border:0;height:auto;">
+            <img src="{{ asset('logo.jpeg') }}" alt="Plaid" width="100"
+                style="vertical-align:middle;margin-left:5px;border:0;height:auto;">
         </div>
         <div class="header" style="text-align:center;margin-bottom:30px;">
             <h2>Submit DPS Payments </h2>
-            <p class="font-size-14">Please fill out the form below to submit your documents for DPS Payments. Required
-                fields are marked with
-                an
-                asterisk (*).</p>
+            <p class="font-size-14">Upload Documents Here</p>
         </div>
         <form method="POST" action="/upload" enctype="multipart/form-data">
             @csrf

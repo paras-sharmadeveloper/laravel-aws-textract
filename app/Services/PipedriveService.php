@@ -106,7 +106,7 @@ class PipedriveService
         $title = ($data['business_name'] ?? $data['email'] ?? 'New Lead');
 
         $payload = [
-            'title' => Str::title($title),
+            'title' => Str::title($title),~
             'status' => 'open',
             'stage_id' => $this->stageId,
             'pipeline_id' => $this->pipelineId,
