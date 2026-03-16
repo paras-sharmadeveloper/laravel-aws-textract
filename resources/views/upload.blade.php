@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Document Upload</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
 
+<head>
+    <title>Submit DPS Payments</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link href="https://assets.squarespace.com/universal/images-v6/damask/logo-dark.svg" rel="icon">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,7 +19,7 @@
             margin: auto;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
         }
 
         h2 {
@@ -77,85 +78,100 @@
         button:disabled {
             background: gray;
         }
+
+        p.font-size-14 {
+            font-size: 13px;
+            text-decoration: underline;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="card">
+    <div class="card">
 
-@if(session('success'))
-    <div style="background:#d4edda;color:#155724;padding:10px;margin-bottom:10px;border-radius:5px;">
-        {{ session('success') }}
+        @if (session('success'))
+            <div style="background:#d4edda;color:#155724;padding:10px;margin-bottom:10px;border-radius:5px;">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div style="background:#f8d7da;color:#721c24;padding:10px;margin-bottom:10px;border-radius:5px;">
+                {{ session('error') }}
+            </div>
+        @endif
+        <div style="text-align:center;margin-bottom:20px;">
+            <img src="https://assets.squarespace.com/universal/images-v6/damask/logo-dark.svg" alt="Plaid"
+                width="120">
+        </div>
+        <div class="header" style="text-align:center;margin-bottom:30px;">
+            <h2>Submit DPS Payments </h2>
+            <p class="font-size-14">Please fill out the form below to submit your documents for DPS Payments. Required
+                fields are marked with
+                an
+                asterisk (*).</p>
+        </div>
+        <form method="POST" action="/upload" enctype="multipart/form-data">
+            @csrf
+
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label>Phone *</label>
+                <input type="text" name="phone" required>
+            </div>
+
+            <hr>
+
+            <div class="form-group">
+                <label>Drivers License or Passport *</label>
+                <input type="file" name="driving_license" accept=".pdf,.jpg,.jpeg,.png,.heic">
+                <small>PDF, JPG, PNG, HEIC only • Max 10MB</small>
+            </div>
+
+            <div class="form-group">
+                <label>Voided Check / Bank Letter *</label>
+                <input type="file" name="bank_doc" accept=".pdf,.jpg,.jpeg,.png,.heic">
+            </div>
+
+            <div class="form-group">
+                <label>Tax Document</label>
+                <input type="file" name="tax_doc" accept=".pdf,.jpg,.jpeg,.png,.heic">
+            </div>
+
+            <div class="form-group">
+                <label>Bank / Processing Statement</label>
+                <input type="file" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png,.heic">
+            </div>
+
+            <hr>
+
+            <div class="form-group">
+                <label>Pictures (Multiple Allowed)</label>
+                <input type="file" name="pictures[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
+            </div>
+
+            <div class="form-group">
+                <label>Other / Supporting Documents</label>
+                <input type="file" name="other_doc[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
+            </div>
+
+            <button type="submit">Upload & Process</button>
+        </form>
     </div>
-@endif
 
-@if(session('error'))
-    <div style="background:#f8d7da;color:#721c24;padding:10px;margin-bottom:10px;border-radius:5px;">
-        {{ session('error') }}
-    </div>
-@endif
-
-    <h2>Document Processor Upload</h2>
-
-    <form method="POST" action="/upload" enctype="multipart/form-data">
-        @csrf
-
-        <div class="form-group">
-            <label>Email *</label>
-            <input type="email" name="email"   required>
-        </div>
-
-        <div class="form-group">
-            <label>Phone *</label>
-            <input type="text" name="phone"   required>
-        </div>
-
-        <hr>
-
-        <div class="form-group">
-            <label>Drivers License or Passport *</label>
-            <input type="file" name="driving_license" accept=".pdf,.jpg,.jpeg,.png,.heic">
-            <small>PDF, JPG, PNG, HEIC only • Max 10MB</small>
-        </div>
-
-        <div class="form-group">
-            <label>Voided Check / Bank Letter *</label>
-            <input type="file" name="bank_doc" accept=".pdf,.jpg,.jpeg,.png,.heic">
-        </div>
-
-        <div class="form-group">
-            <label>Tax Document</label>
-            <input type="file" name="tax_doc" accept=".pdf,.jpg,.jpeg,.png,.heic">
-        </div>
-
-        <div class="form-group">
-            <label>Bank / Processing Statement</label>
-            <input type="file" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png,.heic">
-        </div>
-
-        <hr>
-
-        <div class="form-group">
-            <label>Pictures (Multiple Allowed)</label>
-            <input type="file" name="pictures[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
-        </div>
-
-        <div class="form-group">
-            <label>Other / Supporting Documents</label>
-            <input type="file" name="other_doc[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
-        </div>
-
-        <button type="submit">Upload & Process</button>
-    </form>
-</div>
-
-<script>
-document.querySelector("form").addEventListener("submit", function() {
-    const btn = document.querySelector("button");
-    btn.innerText = "Processing...";
-    btn.disabled = true;
-});
-</script>
+    <script>
+        document.querySelector("form").addEventListener("submit", function() {
+            const btn = document.querySelector("button");
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+        });
+    </script>
 
 </body>
+
 </html>
