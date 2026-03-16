@@ -20,8 +20,57 @@ class PdfService
     | Convert Image to PDF
     |-------------------------------------------------------
     */
-
     public function imageToPdf($imagePath)
+    {
+        $image = $this->imageManager->read($imagePath);
+
+        $width  = $image->width();
+        $height = $image->height();
+
+        $tempImage = tempnam(sys_get_temp_dir(), 'img') . '.jpg';
+        $image->toJpeg(90)->save($tempImage);
+
+        $pdf = new Fpdi();
+
+        $pdf->SetPrintHeader(false);
+        $pdf->SetPrintFooter(false);
+
+        // A4 size mm
+        $pageWidth = 210;
+        $pageHeight = 297;
+
+        // auto orientation
+        if ($width > $height) {
+            $orientation = 'L';
+            $pageWidth = 297;
+            $pageHeight = 210;
+        } else {
+            $orientation = 'P';
+        }
+
+        $pdf->AddPage($orientation, [$pageWidth, $pageHeight]);
+
+        // calculate scale
+        $ratio = min($pageWidth / $width, $pageHeight / $height);
+
+        $newWidth  = $width * $ratio;
+        $newHeight = $height * $ratio;
+
+        // center image
+        $x = ($pageWidth - $newWidth) / 2;
+        $y = ($pageHeight - $newHeight) / 2;
+
+        $pdf->Image($tempImage, $x, $y, $newWidth, $newHeight);
+
+        $output = tempnam(sys_get_temp_dir(), 'pdf') . '.pdf';
+
+        $pdf->Output($output, 'F');
+
+        unlink($tempImage);
+
+        return $output;
+    }
+    public function OldimageToPdf($imagePath)
     {
         $image = $this->imageManager->read($imagePath);
         // $image->scaleDown(2000);
