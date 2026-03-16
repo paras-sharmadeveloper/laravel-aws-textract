@@ -103,7 +103,7 @@ class PipedriveService
     */
     public function createDeal(array $data, $personId, $orgId)
     {
-        $title = ($data['business_name'] ?? $data['email'] ?? 'New Lead') . ' - Onboarding';
+        $title = ($data['business_name'] ?? $data['email'] ?? 'New Lead');
 
         $payload = [
             'title' => Str::title($title),
