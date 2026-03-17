@@ -30,6 +30,9 @@ class PipedriveService
     {
         $url = "{$this->baseUrl}{$endpoint}?api_token={$this->token}";
 
+        // Clean UTF-8 issues from OCR / external data
+        $data = $this->cleanUtf8($data);
+
         $response = $isMultipart
             ? Http::asMultipart()->post($url, $data)
             : Http::$method($url, $data);
@@ -44,6 +47,25 @@ class PipedriveService
 
         return $response->json('data');
     }
+
+    // private function request($method, $endpoint, $data = [], $isMultipart = false)
+    // {
+    //     $url = "{$this->baseUrl}{$endpoint}?api_token={$this->token}";
+
+    //     $response = $isMultipart
+    //         ? Http::asMultipart()->post($url, $data)
+    //         : Http::$method($url, $data);
+
+    //     if (!$response->successful()) {
+    //         Log::error("Pipedrive API Error", [
+    //             'endpoint' => $endpoint,
+    //             'response' => $response->body()
+    //         ]);
+    //         throw new \Exception("Pipedrive API Error");
+    //     }
+
+    //     return $response->json('data');
+    // }
 
     /*
     |--------------------------------------------------------------------------
@@ -106,8 +128,8 @@ class PipedriveService
         $title = ($data['business_name'] ?? $data['email'] ?? 'New Lead');
 
         $payload = [
-            'title' => Str::title($title),~
-            'status' => 'open',
+            'title' => Str::title($title),
+            ~'status' => 'open',
             'stage_id' => $this->stageId,
             'pipeline_id' => $this->pipelineId,
             'user_id' => $this->ownerId,
@@ -265,10 +287,28 @@ class PipedriveService
             );
         }
 
+
+
         return [
             'person_id' => $personId,
             'org_id' => $orgId,
             'deal_id' => $dealId
         ];
+    }
+
+    private function cleanUtf8($data)
+    {
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = $this->cleanUtf8($value);
+            }
+            return $data;
+        }
+
+        if (is_string($data)) {
+            return iconv('UTF-8', 'UTF-8//IGNORE', $data);
+        }
+
+        return $data;
     }
 }
