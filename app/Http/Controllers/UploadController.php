@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\ProcessDocumentsJob;
+use App\Jobs\{ProcessDocumentsJob, ProcessOcrJob};
 use App\Services\S3Service;
 use App\Services\PdfService;
 use Intervention\Image\ImageManager;
@@ -49,12 +49,6 @@ class UploadController extends Controller
                 'phone' => $request->phone,
                 'documents' => []
             ];
-
-            /*
-        |--------------------------------------------------------------------------
-        | SINGLE FILES
-        |--------------------------------------------------------------------------
-        */
 
             // $singleFields = [
             //     'driving_license' => 'ID.pdf',`
@@ -100,10 +94,10 @@ class UploadController extends Controller
             }
 
             /*
-        |--------------------------------------------------------------------------
-        | MULTIPLE PICTURES
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | MULTIPLE PICTURES
+            |--------------------------------------------------------------------------
+            */
 
 
             if ($request->hasFile('pictures')) {
@@ -169,12 +163,13 @@ class UploadController extends Controller
             }
 
             /*
-        |--------------------------------------------------------------------------
-        | DISPATCH JOB
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | DISPATCH JOB
+            |--------------------------------------------------------------------------
+            */
             Log::info("uploadme files ", ['file' => $result['documents']]);
-            ProcessDocumentsJob::dispatch($result);
+            // ProcessDocumentsJob::dispatch($result);
+            ProcessOcrJob::dispatch($result);
 
             return back()->with('success', 'Your documents have been uploaded successfully. Processing has started and the lead will be created within approximately 2 minutes.');
         } catch (\Exception $e) {

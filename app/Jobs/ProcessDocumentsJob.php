@@ -14,12 +14,14 @@ use App\Services\TextractService;
 use App\Services\GPTService;
 use App\Services\GeoService;
 use App\Services\{PipedriveService, PdfService};
+use App\Jobs\AttachFilesToPipedriveJob;
+
 
 class ProcessDocumentsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
+    public $tries = 1;
     public $timeout = 600;
 
     protected $result;
@@ -33,8 +35,7 @@ class ProcessDocumentsJob implements ShouldQueue
         TextractService $textract,
         GPTService $gpt,
         GeoService $geo,
-        PipedriveService $pipedrive,
-        PdfService $pdfService
+        PipedriveService $pipedrive
     ) {
 
         try {
@@ -124,8 +125,6 @@ class ProcessDocumentsJob implements ShouldQueue
 
             foreach ($this->result['documents'] as $docName => $doc) {
 
-                Log::info("Process Document in Job", ['file' => $docName]);
-
                 foreach ($doc['s3_keys'] as $key) {
 
                     if (isset($unique[$key])) {
@@ -163,6 +162,10 @@ class ProcessDocumentsJob implements ShouldQueue
             $parsedData['files'] = $filesPayload;
             Log::info("FILES SENT TO PIPEDRIVE", $parsedData['files']);
             $ids = $pipedrive->processLead($parsedData);
+            AttachFilesToPipedriveJob::dispatch(
+                $ids['deal_id'],
+                $parsedData['files'] ?? []
+            )->onQueue('attachments')->delay(now()->addSeconds(10));
         } catch (\Exception $e) {
 
             throw $e;

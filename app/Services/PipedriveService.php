@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Services\S3Service;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class PipedriveService
 {
@@ -25,28 +26,82 @@ class PipedriveService
         $this->stageId   = config('services.pipedrive.stage_id');
         $this->s3Service = $s3Service;
     }
-
     private function request($method, $endpoint, $data = [], $isMultipart = false)
     {
         $url = "{$this->baseUrl}{$endpoint}?api_token={$this->token}";
 
-        // Clean UTF-8 issues from OCR / external data
+        // Clean UTF-8 issues
         $data = $this->cleanUtf8($data);
 
-        $response = $isMultipart
-            ? Http::asMultipart()->post($url, $data)
-            : Http::$method($url, $data);
+        file_put_contents(
+            storage_path('app/cleanutf.txt'),
+            print_r($data, true)
+        );
 
-        if (!$response->successful()) {
-            Log::error("Pipedrive API Error", [
+
+
+        try {
+
+            $client = Http::timeout(60)        // ⏱️ prevent hanging
+                ->retry(3, 1000);              // 🔁 retry 3 times (1 sec gap)
+
+            if ($isMultipart) {
+                $response = $client->asMultipart()->post($url, $data);
+            } else {
+                $response = match (strtolower($method)) {
+                    'post' => $client->post($url, $data),
+                    'get' => $client->get($url, $data),
+                    'put' => $client->put($url, $data),
+                    'delete' => $client->delete($url, $data),
+                    default => throw new \Exception("Invalid HTTP method: {$method}")
+                };
+            }
+
+            if (!$response->successful()) {
+
+                Log::error("Pipedrive API Error", [
+                    'endpoint' => $endpoint,
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                    'payload' => $data
+                ]);
+
+                throw new \Exception("Pipedrive API Error: " . $response->status());
+            }
+
+            return $response->json('data');
+        } catch (\Exception $e) {
+
+            Log::error("Pipedrive Request Failed", [
                 'endpoint' => $endpoint,
-                'response' => $response->body()
+                'error' => $e->getMessage()
             ]);
-            throw new \Exception("Pipedrive API Error");
-        }
 
-        return $response->json('data');
+            throw $e;
+        }
     }
+
+    // private function request($method, $endpoint, $data = [], $isMultipart = false)
+    // {
+    //     $url = "{$this->baseUrl}{$endpoint}?api_token={$this->token}";
+
+    //     // Clean UTF-8 issues from OCR / external data
+    //     $data = $this->cleanUtf8($data);
+
+    //     $response = $isMultipart
+    //         ? Http::asMultipart()->post($url, $data)
+    //         : Http::$method($url, $data);
+
+    //     if (!$response->successful()) {
+    //         Log::error("Pipedrive API Error", [
+    //             'endpoint' => $endpoint,
+    //             'response' => $response->body()
+    //         ]);
+    //         throw new \Exception("Pipedrive API Error");
+    //     }
+
+    //     return $response->json('data');
+    // }
 
     // private function request($method, $endpoint, $data = [], $isMultipart = false)
     // {
@@ -82,10 +137,8 @@ class PipedriveService
             'phone' => $data['phone'] ?? null,
             'owner_id' => $this->ownerId,
             'visible_to' => 3,
-
             // DOB custom field
             'c1370eac8a04feabd3a533ed981bf9a1a498b4a6' => $data['date_of_birth'] ?? null,
-
             // Full Address
             '1367ab6ef1d586538eea139bc7e4971e204068c4' => Str::title($data['home_address']) ?? null,
         ];
@@ -233,32 +286,7 @@ class PipedriveService
         }
     }
 
-    // public function attachFileFromS3($dealId, $s3Key, $fileName)
-    // {
-    //     // 🔹 Download file content from S3
-    //     $fileContent = $this->s3Service->getFileContent($s3Key);
 
-    //     if (!$fileContent) {
-    //         \Log::error("S3 file download failed", ['key' => $s3Key]);
-    //         return;
-    //     }
-
-    //     $url = "{$this->baseUrl}/files?api_token={$this->token}";
-
-    //     $response = Http::attach(
-    //         'file',
-    //         $fileContent,
-    //         $fileName
-    //     )->post($url, [
-    //         'deal_id' => $dealId
-    //     ]);
-
-    //     if (!$response->successful()) {
-    //         \Log::error("Pipedrive File Upload Failed", [
-    //             'response' => $response->body()
-    //         ]);
-    //     }
-    // }
 
     /*
     |--------------------------------------------------------------------------
@@ -274,20 +302,18 @@ class PipedriveService
         $uploaded = [];
 
 
-        foreach ($data['files'] ?? [] as $file) {
-            Log::info("Processing file for attachment", ['file' => $file]);
-            if (!isset($file['s3_key'])) {
-                continue;
-            }
+        // foreach ($data['files'] ?? [] as $file) {
+        //     Log::info("Processing file for attachment", ['file' => $file]);
+        //     if (!isset($file['s3_key'])) {
+        //         continue;
+        //     }
 
-            $this->attachFileFromS3(
-                $dealId,
-                $file['s3_key'],
-                $file['file_name'] ?? 'document.pdf'
-            );
-        }
-
-
+        //     $this->attachFileFromS3(
+        //         $dealId,
+        //         $file['s3_key'],
+        //         $file['file_name'] ?? 'document.pdf'
+        //     );
+        // }
 
         return [
             'person_id' => $personId,
@@ -299,14 +325,36 @@ class PipedriveService
     private function cleanUtf8($data)
     {
         if (is_array($data)) {
+            $cleaned = [];
+
             foreach ($data as $key => $value) {
-                $data[$key] = $this->cleanUtf8($value);
+
+                // Clean key
+                $cleanKey = is_string($key)
+                    ? iconv('UTF-8', 'UTF-8//IGNORE', $key)
+                    : $key;
+
+                if (is_string($cleanKey)) {
+                    $cleanKey = preg_replace('/[^\x20-\x7E]/u', '', $cleanKey);
+                    $cleanKey = trim($cleanKey);
+                }
+
+                // 🔥 FIX: empty key ko handle karo
+                if (empty($cleanKey)) {
+                    $cleanKey = 'status'; // 👈 manually assign
+                }
+
+                $cleaned[$cleanKey] = $this->cleanUtf8($value);
             }
-            return $data;
+
+            return $cleaned;
         }
 
         if (is_string($data)) {
-            return iconv('UTF-8', 'UTF-8//IGNORE', $data);
+            $data = preg_replace('/[\x00-\x1F\x7F]/u', ' ', $data);
+            $data = iconv('UTF-8', 'UTF-8//IGNORE', $data);
+
+            return $data !== false ? $data : '';
         }
 
         return $data;
