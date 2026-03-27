@@ -159,7 +159,13 @@
 
             <div class="form-group">
                 <label>Phone *</label>
-                <input type="text" name="phone" required>
+                <div style="display:flex; gap:10px;">
+
+
+
+                    <input type="text" name="phone" required maxlength="10" pattern="[0-9]{10}"
+                        placeholder="Enter phone" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </div>
             </div>
 
             <hr>
@@ -212,3 +218,24 @@
 </body>
 
 </html>
+<script>
+    document.querySelector("form").addEventListener("submit", function(e) {
+        const phone = document.querySelector("[name='phone']").value;
+        const email = document.querySelector("[name='email']").value;
+
+        const phoneRegex = /^[0-9]{10}$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!phoneRegex.test(phone)) {
+            alert("Phone must be exactly 10 digits");
+            e.preventDefault();
+            return;
+        }
+
+        if (!emailRegex.test(email)) {
+            alert("Enter a valid email address");
+            e.preventDefault();
+            return;
+        }
+    });
+</script>

@@ -30,10 +30,9 @@ class UploadController extends Controller
     public function upload(Request $request)
     {
         try {
-
             $request->validate([
                 'email' => 'required|email',
-                'phone' => 'required',
+                'phone' => 'required|digits:10',
                 'driving_license' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
                 'bank_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
                 'tax_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
@@ -50,12 +49,7 @@ class UploadController extends Controller
                 'documents' => []
             ];
 
-            // $singleFields = [
-            //     'driving_license' => 'ID.pdf',`
-            //     'bank_doc' => 'VC.pdf',
-            //     'tax_doc' => 'TaxID.pdf',
-            //     'bank_statement' => 'Statement.pdf'
-            // ];
+
 
             $singleFields = [
                 'driving_license' => 'ID',
