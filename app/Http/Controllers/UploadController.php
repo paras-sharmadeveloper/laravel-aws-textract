@@ -68,7 +68,7 @@ class UploadController extends Controller
 
                 $ext = $file->getClientOriginalExtension();
 
-                if (in_array($ext, ['heic', 'heif'])) {
+                if (in_array($ext, ['heic', 'heif', 'HEIC', 'HEIF'])) {
                     $filePath = $this->convertHeicToJpg($file);
                     $ext = 'jpg';
                 } else {
