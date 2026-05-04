@@ -133,14 +133,14 @@ class PipedriveService
 
         $payload = [
             'name' => Str::title($name) ?: ($data['email'] ?? 'Unknown Lead'),
-            'email' => $data['email'] ?? null,
-            'phone' => $data['phone'] ?? null,
+            'email' => $data['email'] ?? '.',
+            'phone' => $data['phone'] ?? '.',
             'owner_id' => $this->ownerId,
             'visible_to' => 3,
             // DOB custom field
-            'c1370eac8a04feabd3a533ed981bf9a1a498b4a6' => $data['date_of_birth'] ?? null,
+            'c1370eac8a04feabd3a533ed981bf9a1a498b4a6' => $data['date_of_birth'] ?? '.',
             // Full Address
-            '1367ab6ef1d586538eea139bc7e4971e204068c4' => Str::title($data['home_address']) ?? null,
+            '1367ab6ef1d586538eea139bc7e4971e204068c4' => Str::title($data['home_address']) ?? '.',
         ];
 
         return $this->request('post', '/persons', $payload)['id'];
@@ -158,14 +158,14 @@ class PipedriveService
         }
         $identificationNumber = str_replace('-', '', $data['identification_number'] ?? '');
         $payload = [
-            'name' => Str::title($data['business_name']),
-            'address' => Str::title($data['business_address']) ?? null,
+            'name' => Str::title($data['business_name']) ?? '.',
+            'address' => Str::title($data['business_address']) ?? '.',
             'owner_id' => $this->ownerId,
             'visible_to' => 3,
-            'a5caf4d8d131d8b6d965dc17a52d08de2d433bd9' => $identificationNumber ?? null,
-            '87e4f8286776a95af868610d3c73af929b7da72f' => Str::title($data['bank_name']) ?? null,
-            'd48c4347fce9119821fe599ca67daec5b2be614f' => $data['routing_number'] ?? null,
-            '7a749d6ff1cf7de4ecaa2ad3ffc8b35e1f1442a7' => $data['account_number'] ?? null,
+            'a5caf4d8d131d8b6d965dc17a52d08de2d433bd9' => $identificationNumber ?? '.',
+            '87e4f8286776a95af868610d3c73af929b7da72f' => Str::title($data['bank_name']) ?? '.',
+            'd48c4347fce9119821fe599ca67daec5b2be614f' => $data['routing_number'] ?? '.',
+            '7a749d6ff1cf7de4ecaa2ad3ffc8b35e1f1442a7' => $data['account_number'] ?? '.',
         ];
 
         return $this->request('post', '/organizations', $payload)['id'];
