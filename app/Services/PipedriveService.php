@@ -134,7 +134,7 @@ class PipedriveService
         $payload = [
             'name' => Str::title($name) ?: ($data['email'] ?? 'Unknown Lead'),
             'email' => $data['email'] ?? '.',
-            'phone' => $data['phone'] ?? '.',
+            'phone' => isset($data['phone']) ? '+1' . $data['phone'] : '.',
             'owner_id' => $this->ownerId,
             'visible_to' => 3,
             // DOB custom field

@@ -163,8 +163,10 @@
 
 
 
+                    <span style="display:flex;align-items:center;background:#f0f0f0;border:1px solid #ddd;border-radius:6px 0 0 6px;padding:0 10px;font-size:14px;color:#333;white-space:nowrap;">+1</span>
                     <input type="text" name="phone" required maxlength="10" pattern="[0-9]{10}"
-                        placeholder="Enter phone" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        placeholder="Enter 10-digit phone" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        style="border-radius:0 6px 6px 0;border-left:none;">
                 </div>
             </div>
 
