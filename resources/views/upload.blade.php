@@ -386,14 +386,21 @@
 
                 @if (session('success'))
                     <div class="alert alert-success">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M20 6L9 17l-5-5" />
+                        </svg>
                         <span>{{ session('success') }}</span>
                     </div>
                 @endif
 
                 @if (session('error'))
                     <div class="alert alert-error">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 8v4M12 16h.01" />
+                        </svg>
                         <span>{{ session('error') }}</span>
                     </div>
                 @endif
@@ -418,7 +425,8 @@
                                 <div class="phone-input">
                                     <span class="phone-prefix">+1</span>
                                     <input type="text" name="phone" required maxlength="10" pattern="[0-9]{10}"
-                                        placeholder="10-digit phone" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                        placeholder="10-digit phone"
+                                        oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                 </div>
                             </div>
                         </div>
@@ -433,11 +441,17 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="field-label">Owner ID: Drivers License / Passport <span class="req">*</span></label>
+                            <label class="field-label">Owner ID: Drivers License / Passport <span
+                                    class="req">*</span></label>
                             <label class="dropzone" data-dropzone>
                                 <input type="file" name="driving_license" accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <span class="dropzone-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="12" r="2"/><path d="M15 10h3M15 14h3"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="5" width="18" height="14" rx="2" />
+                                        <circle cx="9" cy="12" r="2" />
+                                        <path d="M15 10h3M15 14h3" />
+                                    </svg>
                                 </span>
                                 <span class="dropzone-text">
                                     <span class="primary">Click to upload</span>
@@ -452,7 +466,11 @@
                             <label class="dropzone" data-dropzone>
                                 <input type="file" name="bank_doc" accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <span class="dropzone-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="6" width="20" height="12" rx="2" />
+                                        <path d="M2 10h20" />
+                                    </svg>
                                 </span>
                                 <span class="dropzone-text">
                                     <span class="primary">Click to upload</span>
@@ -467,7 +485,11 @@
                             <label class="dropzone" data-dropzone>
                                 <input type="file" name="tax_doc" accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <span class="dropzone-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path d="M14 3v4a1 1 0 001 1h4" />
+                                        <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
+                                    </svg>
                                 </span>
                                 <span class="dropzone-text">
                                     <span class="primary">Click to upload</span>
@@ -481,9 +503,15 @@
                             <label class="field-label">Bank Statements</label>
                             <small class="hint">Upload each month separately • Up to 20 files</small>
                             <label class="dropzone" data-dropzone>
-                                <input type="file" name="statement_bank[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
+                                <input type="file" name="statement_bank[]" multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <span class="dropzone-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/><path d="M9 13h6M9 17h6"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path d="M14 3v4a1 1 0 001 1h4" />
+                                        <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
+                                        <path d="M9 13h6M9 17h6" />
+                                    </svg>
                                 </span>
                                 <span class="dropzone-text">
                                     <span class="primary">Click to upload</span>
@@ -497,9 +525,15 @@
                             <label class="field-label">CCP Statements</label>
                             <small class="hint">Upload each month separately • Up to 20 files</small>
                             <label class="dropzone" data-dropzone>
-                                <input type="file" name="statement_ccp[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
+                                <input type="file" name="statement_ccp[]" multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <span class="dropzone-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/><path d="M9 13h6M9 17h6"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path d="M14 3v4a1 1 0 001 1h4" />
+                                        <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
+                                        <path d="M9 13h6M9 17h6" />
+                                    </svg>
                                 </span>
                                 <span class="dropzone-text">
                                     <span class="primary">Click to upload</span>
@@ -513,9 +547,15 @@
                             <label class="field-label">POS Statements</label>
                             <small class="hint">Upload each month separately • Up to 20 files</small>
                             <label class="dropzone" data-dropzone>
-                                <input type="file" name="statement_pos[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
+                                <input type="file" name="statement_pos[]" multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <span class="dropzone-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/><path d="M9 13h6M9 17h6"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path d="M14 3v4a1 1 0 001 1h4" />
+                                        <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
+                                        <path d="M9 13h6M9 17h6" />
+                                    </svg>
                                 </span>
                                 <span class="dropzone-text">
                                     <span class="primary">Click to upload</span>
@@ -539,7 +579,12 @@
                             <label class="dropzone" data-dropzone>
                                 <input type="file" name="pictures[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <span class="dropzone-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5L5 19"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="5" width="18" height="14" rx="2" />
+                                        <circle cx="8.5" cy="10.5" r="1.5" />
+                                        <path d="M21 15l-5-5L5 19" />
+                                    </svg>
                                 </span>
                                 <span class="dropzone-text">
                                     <span class="primary">Click to upload</span>
@@ -552,9 +597,14 @@
                         <div class="form-group">
                             <label class="field-label">Other / Supporting Documents</label>
                             <label class="dropzone" data-dropzone>
-                                <input type="file" name="other_doc[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
+                                <input type="file" name="other_doc[]" multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <span class="dropzone-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a5 5 0 01-7.07-7.07l9.19-9.19a3.5 3.5 0 015 5l-9.2 9.19a1.5 1.5 0 01-2.12-2.12l8.49-8.48"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path
+                                            d="M21.44 11.05l-9.19 9.19a5 5 0 01-7.07-7.07l9.19-9.19a3.5 3.5 0 015 5l-9.2 9.19a1.5 1.5 0 01-2.12-2.12l8.49-8.48" />
+                                    </svg>
                                 </span>
                                 <span class="dropzone-text">
                                     <span class="primary">Click to upload</span>
@@ -569,7 +619,7 @@
 
                     <button type="submit" class="submit-btn" id="submitBtn">
                         <span class="spinner"></span>
-                        <span class="btn-text">Upload &amp; Process</span>
+                        <span class="btn-text">Submit</span>
                     </button>
                     <p class="footnote">Processing typically completes within ~2 minutes of upload.</p>
                 </form>
