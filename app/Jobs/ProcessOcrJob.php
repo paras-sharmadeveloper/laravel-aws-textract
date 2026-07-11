@@ -65,6 +65,12 @@ class ProcessOcrJob implements ShouldQueue
         // 👉 Statement renaming (bank / ccp / pos) - individual files, never merged
         $usedNames = [];
 
+        $categoryLabels = [
+            'bank' => 'Bank',
+            'ccp' => 'CCP',
+            'pos' => 'POS',
+        ];
+
         foreach ($this->result['statements'] ?? [] as $idx => $statement) {
 
             $ext = strtolower($statement['ext']);
@@ -85,7 +91,9 @@ class ProcessOcrJob implements ShouldQueue
             $period = $dateService->extractPeriod($cleanText);
 
             if ($period) {
-                $finalName = "{$statement['category']}statement_{$period['month']}{$period['year']}.{$ext}";
+                $categoryLabel = $categoryLabels[$statement['category']] ?? ucfirst($statement['category']);
+                $monthLabel = ucfirst($period['month']);
+                $finalName = "{$categoryLabel}_Statement_{$monthLabel}_{$period['year']}.{$ext}";
             } else {
                 Log::warning("Unable to determine statement period for uploaded file. Using original filename.", [
                     's3_key' => $statement['s3_key'],
