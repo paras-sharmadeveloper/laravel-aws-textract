@@ -22,28 +22,51 @@ class StatementDateService
     /**
      * Extract the statement month/year from OCR'd document text.
      * Returns ['month' => 'april', 'year' => '2025'] or null if not confidently found.
+     *
+     * Real statements vary in ways the "obvious" format doesn't cover:
+     * - 2-digit years (4/30/26)
+     * - label glued to the value with no space ("StatementPeriod")
+     * - other text (account numbers) between the label and the date
+     * - "thru" instead of "-" as the range separator
      */
     public function extractPeriod(string $text): ?array
     {
-        // "Statement Period: MM/DD/YYYY - MM/DD/YYYY" -> use the period end date
+        // "Statement Period" ... MM/DD/YY(YY) <sep> MM/DD/YY(YY) -> use the period end date
         if (preg_match(
-            '/Statement\s+Period\s*:?\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*-\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i',
+            '/Statement\s*Period.{0,80}?(\d{1,2}\/\d{1,2}\/\d{2,4})\s*(?:-|–|—|thru|through|to)\s*(\d{1,2}\/\d{1,2}\/\d{2,4})/i',
             $text,
             $m
         )) {
-            return $this->format((int) $m[4], (int) $m[6]);
+            return $this->parseDate($m[2]);
         }
 
-        // "Statement Date: MM/DD/YYYY"
+        // "Statement Date" ... MM/DD/YY(YY)
         if (preg_match(
-            '/Statement\s+Date\s*:?\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i',
+            '/Statement\s*Date.{0,80}?(\d{1,2}\/\d{1,2}\/\d{2,4})/i',
             $text,
             $m
         )) {
-            return $this->format((int) $m[1], (int) $m[3]);
+            return $this->parseDate($m[1]);
         }
 
         return null;
+    }
+
+    private function parseDate(string $date): ?array
+    {
+        $parts = array_map('intval', explode('/', $date));
+
+        if (count($parts) !== 3) {
+            return null;
+        }
+
+        [$month, , $year] = $parts;
+
+        if ($year < 100) {
+            $year += 2000;
+        }
+
+        return $this->format($month, $year);
     }
 
     private function format(int $month, int $year): ?array
