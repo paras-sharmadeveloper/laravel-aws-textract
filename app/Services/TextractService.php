@@ -72,11 +72,23 @@ class TextractService
         $jobId = $start['JobId'];
 
         // Polling
+        $attempts = 0;
+        $maxAttempts = 120; // ~4 minutes at 2s intervals
+
         do {
             sleep(2);
             $result = $this->client->getDocumentTextDetection([
                 'JobId' => $jobId
             ]);
+            $attempts++;
+
+            if ($result['JobStatus'] === 'FAILED' || $result['JobStatus'] === 'PARTIAL_SUCCESS') {
+                throw new \Exception("Textract job {$jobId} ended with status: {$result['JobStatus']}");
+            }
+
+            if ($attempts >= $maxAttempts) {
+                throw new \Exception("Textract job {$jobId} timed out waiting for completion");
+            }
         } while ($result['JobStatus'] !== 'SUCCEEDED');
 
         $text = '';
