@@ -52,12 +52,6 @@ class AttachFilesToPipedriveJob implements ShouldQueue
 
         Bus::chain($jobs)
             ->onQueue('attachments')
-            ->catch(function (\Throwable $e) {
-                Log::critical("Attachment chain halted unexpectedly", [
-                    'deal_id' => $this->dealId,
-                    'error' => $e->getMessage(),
-                ]);
-            })
             ->dispatch();
     }
 
