@@ -163,7 +163,8 @@
 
 
 
-                    <span style="display:flex;align-items:center;background:#f0f0f0;border:1px solid #ddd;border-radius:6px 0 0 6px;padding:0 10px;font-size:14px;color:#333;white-space:nowrap;">+1</span>
+                    <span
+                        style="display:flex;align-items:center;background:#f0f0f0;border:1px solid #ddd;border-radius:6px 0 0 6px;padding:0 10px;font-size:14px;color:#333;white-space:nowrap;">+1</span>
                     <input type="text" name="phone" required maxlength="10" pattern="[0-9]{10}"
                         placeholder="Enter 10-digit phone" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                         style="border-radius:0 6px 6px 0;border-left:none;">
@@ -173,30 +174,32 @@
             <hr>
 
             <div class="form-group">
-                <label>Drivers License or Passport *</label>
+                <label>Owner ID: Drivers License / Passport *</label>
                 <input type="file" name="driving_license" accept=".pdf,.jpg,.jpeg,.png,.heic">
                 <small>PDF, JPG, PNG, HEIC only • Max 10MB</small>
             </div>
 
             <div class="form-group">
-                <label>Voided Check / Bank Letter *</label>
+                <label>Void Check / Bank Letter *</label>
                 <input type="file" name="bank_doc" accept=".pdf,.jpg,.jpeg,.png,.heic">
             </div>
 
             <div class="form-group">
-                <label>Tax Document</label>
+                <label>Business ID: EIN / Tax ID</label>
                 <input type="file" name="tax_doc" accept=".pdf,.jpg,.jpeg,.png,.heic">
             </div>
 
             <div class="form-group">
-                <label>Bank / Processing Statement</label>
+                <label>Statements: Bank / CCP / POS</label>
+                <span><small>(Multiple files should be allowed to be uploaded here no need to rename
+                        them)</small></span>
                 <input type="file" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png,.heic">
             </div>
 
             <hr>
 
             <div class="form-group">
-                <label>Pictures (Multiple Allowed)</label>
+                <label>Pictures: POS / Store</label>
                 <input type="file" name="pictures[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
             </div>
 
