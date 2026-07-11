@@ -72,10 +72,10 @@ class PipedriveService
             return $response->json('data');
         } catch (\Exception $e) {
 
-            Log::error("Pipedrive Request Failed", [
-                'endpoint' => $endpoint,
-                'error' => $e->getMessage()
-            ]);
+            // Log::error("Pipedrive Request Failed", [
+            //     'endpoint' => $endpoint,
+            //     'error' => $e->getMessage()
+            // ]);
 
             throw $e;
         }

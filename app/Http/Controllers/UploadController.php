@@ -36,9 +36,14 @@ class UploadController extends Controller
                 'driving_license' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
                 'bank_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
                 'tax_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
-                'bank_statement' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
                 'pictures.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
                 'other_doc.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
+                'statement_bank' => 'nullable|array|max:20',
+                'statement_bank.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
+                'statement_ccp' => 'nullable|array|max:20',
+                'statement_ccp.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
+                'statement_pos' => 'nullable|array|max:20',
+                'statement_pos.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,heic,heif|max:10240',
             ]);
 
             $dealFolder = $request->phone . '_' . Str::random(4);
@@ -46,7 +51,8 @@ class UploadController extends Controller
             $result = [
                 'email' => $request->email,
                 'phone' => $request->phone,
-                'documents' => []
+                'documents' => [],
+                'statements' => []
             ];
 
 
@@ -55,7 +61,6 @@ class UploadController extends Controller
                 'driving_license' => 'ID',
                 'bank_doc' => 'VC',
                 'tax_doc' => 'TAX_ID',
-                'bank_statement' => 'Statement'
             ];
 
             foreach ($singleFields as $field => $name) {
@@ -85,6 +90,51 @@ class UploadController extends Controller
                 $result['documents'][$finalName] = [
                     's3_keys' => [$s3Key]
                 ];
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | STATEMENTS (BANK / CCP / POS) - uploaded individually, never merged
+            |--------------------------------------------------------------------------
+            */
+
+            $statementFields = [
+                'statement_bank' => 'bank',
+                'statement_ccp' => 'ccp',
+                'statement_pos' => 'pos',
+            ];
+
+            foreach ($statementFields as $field => $category) {
+
+                if (!$request->hasFile($field)) {
+                    continue;
+                }
+
+                foreach ($request->file($field) as $file) {
+
+                    $ext = strtolower($file->getClientOriginalExtension());
+                    $originalName = $file->getClientOriginalName();
+
+                    if (in_array($ext, ['heic', 'heif'])) {
+                        $filePath = $this->convertHeicToJpg($file);
+                        $ext = 'jpg';
+                        $originalName = pathinfo($originalName, PATHINFO_FILENAME) . '.jpg';
+                    } else {
+                        $filePath = $file->getRealPath();
+                    }
+
+                    $s3Key = $this->s3Service->uploadFile(
+                        $filePath,
+                        "uploads/$dealFolder/statements/$category/" . Str::random(8) . '.' . $ext
+                    );
+
+                    $result['statements'][] = [
+                        'category' => $category,
+                        's3_key' => $s3Key,
+                        'original_name' => $originalName,
+                        'ext' => $ext,
+                    ];
+                }
             }
 
             /*
@@ -161,7 +211,7 @@ class UploadController extends Controller
             | DISPATCH JOB
             |--------------------------------------------------------------------------
             */
-            Log::info("uploadme files ", ['file' => $result['documents']]);
+            Log::info("uploadme files ", ['file' => $result['documents'], 'statements' => $result['statements']]);
             // ProcessDocumentsJob::dispatch($result);
             ProcessOcrJob::dispatch($result);
 

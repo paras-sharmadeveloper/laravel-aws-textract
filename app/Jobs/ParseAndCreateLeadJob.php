@@ -74,7 +74,17 @@ class ParseAndCreateLeadJob implements ShouldQueue
             ->values()
             ->toArray();
 
-        $parsedData['files'] = $filesPayload;
+        // STATEMENTS (bank / ccp / pos) - attached under their generated filenames
+        $statementFiles = collect($this->result['statements'] ?? [])
+            ->map(fn($statement) => [
+                'file_name' => $statement['final_filename'] ?? $statement['original_name'],
+                's3_key' => $statement['s3_key'],
+                's3_url' => "https://" . env('AWS_BUCKET') . ".s3.amazonaws.com/" . $statement['s3_key'],
+            ])
+            ->values()
+            ->toArray();
+
+        $parsedData['files'] = array_merge($filesPayload, $statementFiles);
 
         $ids = $pipedrive->processLead($parsedData);
 

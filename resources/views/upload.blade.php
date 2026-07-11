@@ -478,16 +478,49 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="field-label">Statements: Bank / CCP / POS</label>
+                            <label class="field-label">Bank Statements</label>
+                            <small class="hint">Upload each month separately • Up to 20 files</small>
                             <label class="dropzone" data-dropzone>
-                                <input type="file" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png,.heic">
+                                <input type="file" name="statement_bank[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <span class="dropzone-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/><path d="M9 13h6M9 17h6"/></svg>
                                 </span>
                                 <span class="dropzone-text">
                                     <span class="primary">Click to upload</span>
                                     <span class="filename" data-filename></span>
-                                    <span class="filehint" data-hint>PDF, JPG, PNG, HEIC • Max 10MB</span>
+                                    <span class="filehint" data-hint>PDF, JPG, PNG, HEIC • Max 10MB per file</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="field-label">CCP Statements</label>
+                            <small class="hint">Upload each month separately • Up to 20 files</small>
+                            <label class="dropzone" data-dropzone>
+                                <input type="file" name="statement_ccp[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
+                                <span class="dropzone-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/><path d="M9 13h6M9 17h6"/></svg>
+                                </span>
+                                <span class="dropzone-text">
+                                    <span class="primary">Click to upload</span>
+                                    <span class="filename" data-filename></span>
+                                    <span class="filehint" data-hint>PDF, JPG, PNG, HEIC • Max 10MB per file</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="field-label">POS Statements</label>
+                            <small class="hint">Upload each month separately • Up to 20 files</small>
+                            <label class="dropzone" data-dropzone>
+                                <input type="file" name="statement_pos[]" multiple accept=".pdf,.jpg,.jpeg,.png,.heic">
+                                <span class="dropzone-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/><path d="M9 13h6M9 17h6"/></svg>
+                                </span>
+                                <span class="dropzone-text">
+                                    <span class="primary">Click to upload</span>
+                                    <span class="filename" data-filename></span>
+                                    <span class="filehint" data-hint>PDF, JPG, PNG, HEIC • Max 10MB per file</span>
                                 </span>
                             </label>
                         </div>

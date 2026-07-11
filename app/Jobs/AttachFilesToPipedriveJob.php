@@ -7,16 +7,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
-
-use App\Services\PipedriveService;
 
 class AttachFilesToPipedriveJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 1;
-    public $timeout = 300;
+    public $timeout = 60;
 
     protected $dealId;
     protected $files;
@@ -27,38 +26,39 @@ class AttachFilesToPipedriveJob implements ShouldQueue
         $this->files = $files;
     }
 
-    public function handle(PipedriveService $pipedrive)
+    /**
+     * Fan out into one job per file, chained so they attach to the deal
+     * strictly one at a time (regardless of worker count) instead of
+     * looping through a potentially large batch inside a single job run.
+     */
+    public function handle()
     {
-        foreach ($this->files as $file) {
+        $files = collect($this->files)
+            ->filter(fn($file) => isset($file['s3_key']))
+            ->values();
 
-            if (!isset($file['s3_key'])) {
-                continue;
-            }
-
-            try {
-
-                Log::info("Attaching file to Pipedrive", [
-                    'deal_id' => $this->dealId,
-                    'file' => $file['file_name'] ?? null
-                ]);
-
-                $pipedrive->attachFileFromS3(
-                    $this->dealId,
-                    $file['s3_key'],
-                    $file['file_name'] ?? 'document.pdf'
-                );
-            } catch (\Exception $e) {
-
-                Log::error("File attachment failed", [
-                    'deal_id' => $this->dealId,
-                    'file' => $file,
-                    'error' => $e->getMessage()
-                ]);
-
-                // Continue instead of failing whole job
-                continue;
-            }
+        if ($files->isEmpty()) {
+            return;
         }
+
+        Log::info("Queueing sequential Pipedrive attachments", [
+            'deal_id' => $this->dealId,
+            'file_count' => $files->count(),
+        ]);
+
+        $jobs = $files
+            ->map(fn($file) => new AttachFileToPipedriveJob($this->dealId, $file))
+            ->all();
+
+        Bus::chain($jobs)
+            ->onQueue('attachments')
+            ->catch(function (\Throwable $e) {
+                Log::critical("Attachment chain halted unexpectedly", [
+                    'deal_id' => $this->dealId,
+                    'error' => $e->getMessage(),
+                ]);
+            })
+            ->dispatch();
     }
 
     public function failed(\Exception $exception)

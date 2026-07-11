@@ -7,6 +7,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use App\Services\TextractService;
+use App\Services\StatementDateService;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -27,7 +28,7 @@ class ProcessOcrJob implements ShouldQueue
         $this->result = $result;
     }
 
-    public function handle(TextractService $textract)
+    public function handle(TextractService $textract, StatementDateService $dateService)
     {
         foreach ($this->result['documents'] as $docName => $doc) {
 
@@ -61,8 +62,59 @@ class ProcessOcrJob implements ShouldQueue
             // );
         }
 
+        // 👉 Statement renaming (bank / ccp / pos) - individual files, never merged
+        $usedNames = [];
+
+        foreach ($this->result['statements'] ?? [] as $idx => $statement) {
+
+            $ext = strtolower($statement['ext']);
+
+            try {
+                $rawText = $ext === 'pdf'
+                    ? $textract->extractPdf($statement['s3_key'])
+                    : $textract->extractImage($statement['s3_key']);
+            } catch (\Exception $e) {
+                Log::error("Statement OCR failed", [
+                    's3_key' => $statement['s3_key'],
+                    'error' => $e->getMessage()
+                ]);
+                $rawText = '';
+            }
+
+            $cleanText = $this->cleanRawText($rawText);
+            $period = $dateService->extractPeriod($cleanText);
+
+            if ($period) {
+                $finalName = "{$statement['category']}statement_{$period['month']}{$period['year']}.{$ext}";
+            } else {
+                Log::warning("Unable to determine statement period for uploaded file. Using original filename.", [
+                    's3_key' => $statement['s3_key'],
+                    'original_name' => $statement['original_name'],
+                ]);
+                $finalName = $statement['original_name'];
+            }
+
+            $finalName = $this->uniqueFilename($finalName, $usedNames);
+
+            $this->result['statements'][$idx]['final_filename'] = $finalName;
+        }
+
         // 👉 Next job
         ParseAndCreateLeadJob::dispatch($this->result)->onQueue('Parse-create-lead');
+    }
+
+    private function uniqueFilename($name, array &$usedNames)
+    {
+        if (!isset($usedNames[$name])) {
+            $usedNames[$name] = 1;
+            return $name;
+        }
+
+        $usedNames[$name]++;
+        $ext = pathinfo($name, PATHINFO_EXTENSION);
+        $base = pathinfo($name, PATHINFO_FILENAME);
+
+        return "{$base}_{$usedNames[$name]}." . $ext;
     }
 
     private function cleanRawText($text)
