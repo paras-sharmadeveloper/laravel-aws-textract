@@ -37,6 +37,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/affiliates/{affiliate}/toggle', [Admin\AffiliateController::class, 'toggle'])->name('affiliates.toggle');
         Route::delete('/affiliates/{affiliate}', [Admin\AffiliateController::class, 'destroy'])->name('affiliates.destroy');
 
+        Route::get('/integrations', [Admin\IntegrationController::class, 'index'])->name('integrations');
+        Route::post('/integrations/{integration}/test', [Admin\IntegrationController::class, 'test'])
+            ->middleware('throttle:30,1')->name('integrations.test');
+
         Route::get('/account', [Admin\AccountController::class, 'edit'])->name('account');
         Route::put('/account/password', [Admin\AccountController::class, 'updatePassword'])->name('account.password');
     });
