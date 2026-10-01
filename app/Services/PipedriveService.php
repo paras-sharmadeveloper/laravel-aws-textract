@@ -236,7 +236,7 @@ class PipedriveService
 
         if (!$fileContent) {
             Log::error("S3 file download failed", ['key' => $s3Key]);
-            return;
+            return false;
         }
 
         // Create temp file
@@ -284,6 +284,8 @@ class PipedriveService
         if (isset($pdfPath) && file_exists($pdfPath)) {
             unlink($pdfPath);
         }
+
+        return $response->successful();
     }
 
 

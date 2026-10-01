@@ -9,6 +9,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
+use App\Models\Lead;
 
 class AttachFilesToPipedriveJob implements ShouldQueue
 {
@@ -19,11 +20,13 @@ class AttachFilesToPipedriveJob implements ShouldQueue
 
     protected $dealId;
     protected $files;
+    protected $leadId;
 
-    public function __construct($dealId, $files)
+    public function __construct($dealId, $files, $leadId = null)
     {
         $this->dealId = $dealId;
         $this->files = $files;
+        $this->leadId = $leadId;
     }
 
     /**
@@ -38,6 +41,7 @@ class AttachFilesToPipedriveJob implements ShouldQueue
             ->values();
 
         if ($files->isEmpty()) {
+            Lead::find($this->leadId)?->syncAttachmentStatus();
             return;
         }
 
@@ -47,7 +51,7 @@ class AttachFilesToPipedriveJob implements ShouldQueue
         ]);
 
         $jobs = $files
-            ->map(fn($file) => new AttachFileToPipedriveJob($this->dealId, $file))
+            ->map(fn($file) => new AttachFileToPipedriveJob($this->dealId, $file, $this->leadId))
             ->all();
 
         Bus::chain($jobs)
@@ -60,6 +64,12 @@ class AttachFilesToPipedriveJob implements ShouldQueue
         Log::critical("AttachFiles Job Failed Completely", [
             'deal_id' => $this->dealId,
             'error' => $exception->getMessage()
+        ]);
+
+        Lead::track($this->leadId, [
+            'status' => 'failed',
+            'stage' => 'attachments',
+            'error' => 'Queueing attachments failed: ' . $exception->getMessage(),
         ]);
     }
 }

@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Services\GPTService;
 use App\Services\GeoService;
 use App\Services\{PipedriveService, PdfService};
+use App\Models\Lead;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -33,6 +34,9 @@ class ParseAndCreateLeadJob implements ShouldQueue
         GeoService $geo,
         PipedriveService $pipedrive
     ) {
+        $leadId = $this->result['lead_id'] ?? null;
+
+        Lead::track($leadId, ['status' => 'processing', 'stage' => 'pipedrive', 'error' => null]);
 
         $gptPayload = [
             'email' => $this->result['email'],
@@ -88,11 +92,28 @@ class ParseAndCreateLeadJob implements ShouldQueue
 
         $ids = $pipedrive->processLead($parsedData);
 
+        Lead::track($leadId, [
+            'stage' => 'attachments',
+            'pipedrive_person_id' => $ids['person_id'],
+            'pipedrive_org_id' => $ids['org_id'],
+            'pipedrive_deal_id' => $ids['deal_id'],
+        ]);
+
         // 👉 Attachments job (already correct)
         AttachFilesToPipedriveJob::dispatch(
             $ids['deal_id'],
-            $parsedData['files']
+            $parsedData['files'],
+            $leadId
         )->onQueue('attachments')->delay(now()->addSeconds(10));
+    }
+
+    public function failed(\Throwable $exception)
+    {
+        Lead::track($this->result['lead_id'] ?? null, [
+            'status' => 'failed',
+            'stage' => 'pipedrive',
+            'error' => 'Lead creation failed: ' . $exception->getMessage(),
+        ]);
     }
 
     private function getDocument($name)

@@ -83,7 +83,7 @@ return [
     |
     */
 
-    'middleware' => ['web'],
+    'middleware' => ['web', 'auth'],
 
     /*
     |--------------------------------------------------------------------------
@@ -197,52 +197,70 @@ return [
     */
 
     'defaults' => [
+        // Fast steps: kick-off, OCR finalize, GPT + Pipedrive deal creation
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default', 'attachments', 'Parse-create-lead'],
+            'queue' => ['default', 'Parse-create-lead'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
-            'maxProcesses' => 1,
+            'minProcesses' => 1,
+            'maxProcesses' => (int) env('HORIZON_PIPELINE_PROCESSES', 3),
+            'balanceMaxShift' => 2,
+            'balanceCooldown' => 3,
             'maxTime' => 0,
             'maxJobs' => 0,
-            'memory' => 1024,
+            'memory' => 512,
             'tries' => 1,
             'timeout' => 1800,
+            'nice' => 0,
+        ],
+        // One job per uploaded file; this pool is what makes 30-40 files fast
+        'supervisor-ocr' => [
+            'connection' => 'redis',
+            'queue' => ['ocr'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'size',
+            'minProcesses' => 1,
+            'maxProcesses' => (int) env('HORIZON_OCR_PROCESSES', 8),
+            'balanceMaxShift' => 4,
+            'balanceCooldown' => 2,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 512,
+            'tries' => 3,
+            'timeout' => 360,
+            'nice' => 0,
+        ],
+        // Pipedrive uploads; each lead's files still attach one at a time
+        'supervisor-attachments' => [
+            'connection' => 'redis',
+            'queue' => ['attachments'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'size',
+            'minProcesses' => 1,
+            'maxProcesses' => (int) env('HORIZON_ATTACHMENT_PROCESSES', 3),
+            'balanceMaxShift' => 2,
+            'balanceCooldown' => 3,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 512,
+            'tries' => 1,
+            'timeout' => 300,
             'nice' => 0,
         ],
     ],
 
     'environments' => [
         'production' => [
-            'supervisor-1' => [
-                'connection' => 'redis',
-                'queue' => ['default', 'attachments', 'Parse-create-lead'],
-                'balance' => 'auto',
-                'autoScalingStrategy' => 'time',
-                'maxProcesses' => 1,
-                'maxTime' => 0,
-                'maxJobs' => 0,
-                'memory' => 1024,
-                'tries' => 1,
-                'timeout' => 1800,
-                'nice' => 0,
-            ],
+            'supervisor-1' => [],
+            'supervisor-ocr' => [],
+            'supervisor-attachments' => [],
         ],
 
         'local' => [
-            'supervisor-1' => [
-                'connection' => 'redis',
-                'queue' => ['default', 'attachments'],
-                'balance' => 'auto',
-                'autoScalingStrategy' => 'time',
-                'maxProcesses' => 1,
-                'maxTime' => 0,
-                'maxJobs' => 0,
-                'memory' => 1024,
-                'tries' => 1,
-                'timeout' => 1800,
-                'nice' => 0,
-            ],
+            'supervisor-1' => [],
+            'supervisor-ocr' => [],
+            'supervisor-attachments' => [],
         ],
     ],
 

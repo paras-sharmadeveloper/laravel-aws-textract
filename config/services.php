@@ -48,6 +48,8 @@ return [
             'owner_id' => env('PIPEDRIVE_OWNER_ID'),
             'pipeline_id' => env('PIPEDRIVE_PIPELINE_ID'),
             'stage_id' => env('PIPEDRIVE_STAGE_ID'),
+            // e.g. https://yourcompany.pipedrive.com — used for deal links in the admin portal
+            'app_url' => env('PIPEDRIVE_APP_URL'),
     ],
 
 

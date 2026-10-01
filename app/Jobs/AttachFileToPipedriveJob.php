@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
 use App\Services\PipedriveService;
+use App\Models\Lead;
 
 class AttachFileToPipedriveJob implements ShouldQueue
 {
@@ -20,11 +21,13 @@ class AttachFileToPipedriveJob implements ShouldQueue
 
     protected $dealId;
     protected $file;
+    protected $leadId;
 
-    public function __construct($dealId, array $file)
+    public function __construct($dealId, array $file, $leadId = null)
     {
         $this->dealId = $dealId;
         $this->file = $file;
+        $this->leadId = $leadId;
     }
 
     public function handle(PipedriveService $pipedrive)
@@ -39,12 +42,16 @@ class AttachFileToPipedriveJob implements ShouldQueue
                 'file' => $this->file['file_name'] ?? null
             ]);
 
-            $pipedrive->attachFileFromS3(
+            $attached = $pipedrive->attachFileFromS3(
                 $this->dealId,
                 $this->file['s3_key'],
                 $this->file['file_name'] ?? 'document.pdf'
             );
+
+            Lead::trackAttachment($this->leadId, $this->file['s3_key'], $this->file['file_name'] ?? 'document.pdf', $attached);
         } catch (\Exception $e) {
+
+            Lead::trackAttachment($this->leadId, $this->file['s3_key'], $this->file['file_name'] ?? 'document.pdf', false, $e->getMessage());
 
             Log::error("File attachment failed", [
                 'deal_id' => $this->dealId,

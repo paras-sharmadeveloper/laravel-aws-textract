@@ -23,3 +23,11 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Allow large applications (30-40 statements) in one submission — Apache mod_php
+<IfModule mod_php.c>
+    php_value max_file_uploads 100
+</IfModule>
+<IfModule mod_php7.c>
+    php_value max_file_uploads 100
+</IfModule>

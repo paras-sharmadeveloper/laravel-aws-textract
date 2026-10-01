@@ -3,23 +3,26 @@
 namespace App\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Services\TextractService;
-use App\Services\StatementDateService;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Bus\Batch;
+use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Str;
+use App\Models\Lead;
 
+/**
+ * Entry point of the pipeline. Fans the OCR work out into one job per file so
+ * a lead with 30-40 files is read in parallel instead of one file at a time,
+ * then FinalizeOcrJob rebuilds the result and continues to ParseAndCreateLeadJob.
+ */
 class ProcessOcrJob implements ShouldQueue
 {
-
-
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 1;
-    public $timeout = 1800;
+    public $timeout = 120;
 
     protected $result;
 
@@ -28,114 +31,63 @@ class ProcessOcrJob implements ShouldQueue
         $this->result = $result;
     }
 
-    public function handle(TextractService $textract, StatementDateService $dateService)
+    public function handle()
     {
+        $leadId = $this->result['lead_id'] ?? null;
+
+        Lead::track($leadId, ['status' => 'processing', 'stage' => 'ocr', 'error' => null]);
+
+        $runId = (string) Str::uuid();
+        $jobs = [];
+
         foreach ($this->result['documents'] as $docName => $doc) {
 
             // 🔥 Skip unnecessary docs (important)
             if (
                 str_starts_with($docName, 'Pics') ||
-                str_starts_with($docName, 'supportingdoc')
+                str_starts_with($docName, 'supportingdoc') ||
+                str_starts_with($docName, 'Projections')
             ) {
                 continue;
             }
 
-            $rawText = '';
-
-            foreach ($doc['s3_keys'] as $key) {
-
-                if (str_starts_with($docName, 'ID')) {
-                    $rawText = $textract->analyzeID($key);
-                } elseif (str_ends_with(strtolower($key), '.pdf')) {
-                    $rawText .= $textract->extractPdf($key);
-                } else {
-                    $rawText .= $textract->extractImage($key);
-                }
-            }
-            $cleanText = $this->cleanRawText($rawText);
-            $this->result['documents'][$docName]['raw_text'] = $cleanText;
-            file_put_contents(storage_path('app/raw_text_' . time() . '.txt'), $cleanText);
-
-            // Storage::put(
-            //     'debug/raw_text_' . time() . '.txt',
-            //     $rawText
-            // );
+            $jobs[] = new OcrDocumentJob($runId, $docName, $doc['s3_keys']);
         }
 
-        // 👉 Statement renaming (bank / ccp / pos) - individual files, never merged
-        $usedNames = [];
-
-        $categoryLabels = [
-            'bank' => 'Bank',
-            'ccp' => 'CCP',
-            'pos' => 'POS',
-        ];
-
+        // 👉 Statements (bank / ccp / pos) - individual files, never merged
         foreach ($this->result['statements'] ?? [] as $idx => $statement) {
-
-            $ext = strtolower($statement['ext']);
-
-            try {
-                $rawText = $ext === 'pdf'
-                    ? $textract->extractPdf($statement['s3_key'])
-                    : $textract->extractImage($statement['s3_key']);
-            } catch (\Exception $e) {
-                Log::error("Statement OCR failed", [
-                    's3_key' => $statement['s3_key'],
-                    'error' => $e->getMessage()
-                ]);
-                $rawText = '';
-            }
-
-            $cleanText = $this->cleanRawText($rawText);
-            $period = $dateService->extractPeriod($cleanText);
-
-            if ($period) {
-                $categoryLabel = $categoryLabels[$statement['category']] ?? ucfirst($statement['category']);
-                $monthLabel = ucfirst($period['month']);
-                $finalName = "{$categoryLabel}_Statement_{$monthLabel}_{$period['year']}.{$ext}";
-            } else {
-                Log::warning("Unable to determine statement period for uploaded file. Using original filename.", [
-                    's3_key' => $statement['s3_key'],
-                    'original_name' => $statement['original_name'],
-                ]);
-                $finalName = $statement['original_name'];
-            }
-
-            $finalName = $this->uniqueFilename($finalName, $usedNames);
-
-            $this->result['statements'][$idx]['final_filename'] = $finalName;
+            $jobs[] = new OcrStatementJob($runId, $idx, $statement);
         }
 
-        // 👉 Next job
-        ParseAndCreateLeadJob::dispatch($this->result)->onQueue('Parse-create-lead');
-    }
-
-    private function uniqueFilename($name, array &$usedNames)
-    {
-        if (!isset($usedNames[$name])) {
-            $usedNames[$name] = 1;
-            return $name;
+        if (empty($jobs)) {
+            FinalizeOcrJob::dispatch($runId, $this->result);
+            return;
         }
 
-        $usedNames[$name]++;
-        $ext = pathinfo($name, PATHINFO_EXTENSION);
-        $base = pathinfo($name, PATHINFO_FILENAME);
+        $result = $this->result;
 
-        return "{$base}_{$usedNames[$name]}." . $ext;
+        Bus::batch($jobs)
+            ->name('ocr-lead-' . ($leadId ?? 'legacy'))
+            ->onQueue('ocr')
+            ->then(function (Batch $batch) use ($runId, $result) {
+                FinalizeOcrJob::dispatch($runId, $result);
+            })
+            ->catch(function (Batch $batch, \Throwable $e) use ($leadId) {
+                Lead::track($leadId, [
+                    'status' => 'failed',
+                    'stage' => 'ocr',
+                    'error' => 'OCR failed: ' . $e->getMessage(),
+                ]);
+            })
+            ->dispatch();
     }
 
-    private function cleanRawText($text)
+    public function failed(\Throwable $exception)
     {
-        // Remove control characters (MOST IMPORTANT)
-        $text = preg_replace('/[\x00-\x1F\x7F]/u', ' ', $text);
-
-        // Normalize spaces
-        $text = preg_replace('/\s+/', ' ', $text);
-
-        // Trim
-        $text = trim($text);
-
-        return $text;
+        Lead::track($this->result['lead_id'] ?? null, [
+            'status' => 'failed',
+            'stage' => 'ocr',
+            'error' => 'OCR failed: ' . $exception->getMessage(),
+        ]);
     }
 }
