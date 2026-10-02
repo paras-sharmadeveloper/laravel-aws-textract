@@ -73,7 +73,7 @@ class ParseAndCreateLeadJob implements ShouldQueue
             ->map(fn($key) => [
                 'file_name' => basename($key),
                 's3_key' => $key,
-                's3_url' => "https://" . env('AWS_BUCKET') . ".s3.amazonaws.com/" . $key,
+                's3_url' => "https://" . config('filesystems.disks.s3.bucket') . ".s3.amazonaws.com/" . $key,
             ])
             ->values()
             ->toArray();
@@ -83,7 +83,7 @@ class ParseAndCreateLeadJob implements ShouldQueue
             ->map(fn($statement) => [
                 'file_name' => $statement['final_filename'] ?? $statement['original_name'],
                 's3_key' => $statement['s3_key'],
-                's3_url' => "https://" . env('AWS_BUCKET') . ".s3.amazonaws.com/" . $statement['s3_key'],
+                's3_url' => "https://" . config('filesystems.disks.s3.bucket') . ".s3.amazonaws.com/" . $statement['s3_key'],
             ])
             ->values()
             ->toArray();

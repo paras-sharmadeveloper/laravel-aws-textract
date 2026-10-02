@@ -174,7 +174,7 @@ class ProcessDocumentsJob implements ShouldQueue
 
     private function generateS3Url($key)
     {
-        return "https://" . env('AWS_BUCKET') . ".s3.amazonaws.com/" . $key;
+        return "https://" . config('filesystems.disks.s3.bucket') . ".s3.amazonaws.com/" . $key;
     }
 
     private function getDocument($name)
