@@ -11,6 +11,7 @@ use App\Services\GPTService;
 use App\Services\GeoService;
 use App\Services\{PipedriveService, PdfService};
 use App\Models\Lead;
+use App\Support\MicrLine;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -51,6 +52,18 @@ class ParseAndCreateLeadJob implements ShouldQueue
         $gptPayload = $this->cleanUtf8($gptPayload);
 
         $parsedData = $gpt->parse($gptPayload);
+
+        // Blank voided checks only carry the numbers in the MICR line, which GPT
+        // often gives up on; read it directly and fill only what GPT left empty
+        $micr = MicrLine::parse($gptPayload['documents']['bank_document']['raw_text'] ?? null);
+
+        if (empty($parsedData['routing_number']) && $micr['routing_number']) {
+            $parsedData['routing_number'] = $micr['routing_number'];
+
+            if (empty($parsedData['account_number'])) {
+                $parsedData['account_number'] = $micr['account_number'];
+            }
+        }
         file_put_contents(
             storage_path('app/gpt-parse.json'),
             json_encode($parsedData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)

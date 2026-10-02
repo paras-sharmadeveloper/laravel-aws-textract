@@ -135,6 +135,23 @@ class GPTService
             Bank Document →
             bank_name, routing_number, account_number
 
+            BANK DOCUMENT (VOIDED CHECK) RULES:
+
+            A voided check is often blank, with no 'Routing' or 'Account' labels.
+            The numbers are in the MICR line printed along the bottom edge, in this order:
+            check number, routing number, account number.
+            OCR often turns the MICR symbols (⑆ ⑈ ⑇) into junk such as ':', '1:', '\"', 'C', 'A' or 'D'.
+            Ignore those symbols and read the digit groups.
+
+            routing_number is the 9-digit group that passes the ABA checksum
+            (3*(d1+d4+d7) + 7*(d2+d5+d8) + (d3+d6+d9) is a multiple of 10)
+
+            account_number is the digit group that follows the routing number
+
+            The short, zero-padded group (e.g. 000099) is the check number. Never use it as the account number
+
+            bank_name is the bank printed on the check (e.g. Citizens, Chase, Bank of America)
+
             If the same field appears in multiple documents:
 
             Use the value from the higher-priority document
