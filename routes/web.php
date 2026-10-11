@@ -70,7 +70,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| AFFILIATE REFERRAL LINKS — keep last, e.g. /jhonsmith
+| AFFILIATE REFERRAL LINKS — keep last, e.g. /johnsmith
 |--------------------------------------------------------------------------
 */
 Route::get('/{slug}', [UploadController::class, 'affiliate'])->where('slug', '[A-Za-z0-9-]+');

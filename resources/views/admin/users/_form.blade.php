@@ -2,7 +2,7 @@
     <div class="field">
         <label for="name">Name</label>
         <input id="name" name="name" class="input" required value="{{ old('name', $user?->name) }}"
-            placeholder="e.g. Jhon Smith">
+            placeholder="e.g. John Smith">
         @error('name')
             <span class="error-text">{{ $message }}</span>
         @enderror
@@ -10,7 +10,7 @@
     <div class="field">
         <label for="email">Email</label>
         <input id="email" name="email" type="email" class="input" required value="{{ old('email', $user?->email) }}"
-            placeholder="jhon@example.com" autocomplete="off">
+            placeholder="john@example.com" autocomplete="off">
         <span class="help">Used to sign in to the admin area.</span>
         @error('email')
             <span class="error-text">{{ $message }}</span>

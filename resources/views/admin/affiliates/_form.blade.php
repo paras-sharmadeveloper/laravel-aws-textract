@@ -2,7 +2,7 @@
     <div class="field">
         <label for="name">Affiliate name</label>
         <input id="name" name="name" class="input" required value="{{ old('name', $affiliate?->name) }}"
-            placeholder="e.g. Jhon Smith">
+            placeholder="e.g. John Smith">
         @error('name')
             <span class="error-text">{{ $message }}</span>
         @enderror
@@ -11,7 +11,7 @@
         <label for="slug">Link</label>
         <div class="prefix-input">
             <span>{{ preg_replace('#^https?://#', '', url('/')) }}/</span>
-            <input id="slug" name="slug" value="{{ old('slug', $affiliate?->slug) }}" placeholder="jhonsmith">
+            <input id="slug" name="slug" value="{{ old('slug', $affiliate?->slug) }}" placeholder="johnsmith">
         </div>
         <span class="help">Leave blank to generate from the name. Lowercase letters, numbers and dashes.</span>
         @error('slug')
@@ -21,7 +21,7 @@
     <div class="field">
         <label for="email">Contact email <span class="muted">(optional)</span></label>
         <input id="email" name="email" type="email" class="input" value="{{ old('email', $affiliate?->email) }}"
-            placeholder="jhon@example.com">
+            placeholder="john@example.com">
         <span class="help">Shown on their application page and used for the "Contact" button.</span>
         @error('email')
             <span class="error-text">{{ $message }}</span>
