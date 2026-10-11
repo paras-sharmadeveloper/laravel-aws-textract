@@ -54,7 +54,7 @@ class AffiliateController extends Controller
 
     private function validated(Request $request, ?Affiliate $affiliate = null): array
     {
-        // Slug defaults to the name, e.g. "Jane Doe" -> "janedoe"
+        // Slug defaults to the name, e.g. "Jhon Smith" -> "jhonsmith"
         $request->merge([
             'slug' => Str::lower(str_replace(' ', '', trim($request->input('slug') ?: Str::slug($request->input('name', ''), '')))),
         ]);
