@@ -215,6 +215,27 @@
             font-weight: 600;
         }
 
+        .referral-contact {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px 20px;
+            margin-top: -10px;
+            font-size: 15px;
+        }
+
+        .referral-contact a {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: var(--paper);
+            overflow-wrap: anywhere;
+        }
+
+        .referral-contact a:hover {
+            color: var(--gold);
+        }
+
         .eyebrow {
             font-size: 14px;
             letter-spacing: 4px;
@@ -1362,6 +1383,27 @@
                 <div class="referral-avatar">{{ $affiliate->initials() }}</div>
                 <span>Referred by <strong>{{ $affiliate->name }}</strong></span>
             </div>
+            @if ($affiliate->email || $affiliate->phone)
+                <div class="referral-contact">
+                    @if ($affiliate->email)
+                        <a href="mailto:{{ $affiliate->email }}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                                <path d="M3 7l9 6 9-6"></path>
+                            </svg>{{ $affiliate->email }}
+                        </a>
+                    @endif
+                    @if ($affiliate->phone)
+                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $affiliate->phone) }}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"></path>
+                            </svg>{{ $affiliate->phone }}
+                        </a>
+                    @endif
+                </div>
+            @endif
         @endif
         <div class="eyebrow">APPLICATION · ABOUT 5 MINUTES</div>
         <h1>See your number in <em>1–3 business days.</em></h1>
