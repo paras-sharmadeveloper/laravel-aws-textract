@@ -878,6 +878,14 @@
                         <path d="M12 17v4"></path>
                     </svg><span class="label">Integrations</span>
                 </a>
+                <a href="{{ route('admin.users.index') }}" title="Users"
+                    class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="8" r="4"></circle>
+                        <path d="M4 21c.9-4 4-6.5 8-6.5s7.1 2.5 8 6.5"></path>
+                    </svg><span class="label">Users</span>
+                </a>
                 <a href="{{ route('admin.account') }}" title="Password"
                     class="{{ request()->routeIs('admin.account*') ? 'active' : '' }}">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"

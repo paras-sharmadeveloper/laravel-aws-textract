@@ -37,6 +37,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/affiliates/{affiliate}/toggle', [Admin\AffiliateController::class, 'toggle'])->name('affiliates.toggle');
         Route::delete('/affiliates/{affiliate}', [Admin\AffiliateController::class, 'destroy'])->name('affiliates.destroy');
 
+        Route::get('/users', [Admin\UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [Admin\UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/edit', [Admin\UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [Admin\UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [Admin\UserController::class, 'destroy'])->name('users.destroy');
+
         Route::get('/integrations', [Admin\IntegrationController::class, 'index'])->name('integrations');
         Route::post('/integrations/{integration}/test', [Admin\IntegrationController::class, 'test'])
             ->middleware('throttle:30,1')->name('integrations.test');
