@@ -26,6 +26,7 @@
                 <thead>
                     <tr>
                         <th>User</th>
+                        <th>Role</th>
                         <th>Added</th>
                         <th></th>
                     </tr>
@@ -37,6 +38,7 @@
                                 <div class="strong">{{ $user->name }}@if ($user->is(auth()->user())) <span class="muted small">(you)</span>@endif</div>
                                 <div class="muted small">{{ $user->email }}</div>
                             </td>
+                            <td>{{ $user->role?->name ?? 'No role' }}</td>
                             <td class="muted small">{{ $user->created_at?->format('M j, Y') }}</td>
                             <td>
                                 <div class="actions">

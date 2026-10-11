@@ -3,18 +3,21 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = User::orderBy('name')->get();
+        $users = User::with('role')->orderBy('name')->get();
+        $roles = Role::orderByDesc('is_admin')->orderBy('name')->get();
 
-        return view('admin.users.index', compact('users'));
+        return view('admin.users.index', compact('users', 'roles'));
     }
 
     public function store(Request $request)
@@ -26,7 +29,9 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        $roles = Role::orderByDesc('is_admin')->orderBy('name')->get();
+
+        return view('admin.users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user)
@@ -54,7 +59,13 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
             // Optional on edit: leave blank to keep the current password
             'password' => [$user ? 'nullable' : 'required', 'confirmed', Password::min(8)->letters()->numbers()],
+            'role_id' => 'required|exists:roles,id',
         ]);
+
+        // Changing your own role could lock you out of this page
+        if ($user?->is($request->user()) && (int) $data['role_id'] !== (int) $user->role_id) {
+            throw ValidationException::withMessages(['role_id' => 'You can\'t change your own role. Ask another admin to do it.']);
+        }
 
         if (empty($data['password'])) {
             unset($data['password']);

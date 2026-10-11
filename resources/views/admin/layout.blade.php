@@ -507,6 +507,13 @@
             accent-color: var(--forest);
         }
 
+        .perm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px 20px;
+            margin-top: 4px;
+        }
+
         /* Tables */
         .table-wrap {
             overflow-x: auto;
@@ -849,43 +856,59 @@
             </div>
             <nav class="nav">
                 <div class="nav-label">Workspace</div>
-                <a href="{{ route('admin.leads.index') }}" title="Leads"
-                    class="{{ request()->routeIs('admin.leads.*') ? 'active' : '' }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path>
-                        <path d="M14 3v5h5"></path>
-                        <path d="M9 13h6M9 17h4"></path>
-                    </svg><span class="label">Leads</span>
-                </a>
-                <a href="{{ route('admin.affiliates.index') }}" title="Affiliates"
-                    class="{{ request()->routeIs('admin.affiliates.*') ? 'active' : '' }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <circle cx="9" cy="8" r="3.5"></circle>
-                        <path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"></path>
-                        <path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.8 3.1 2.6 3.5 5.2"></path>
-                    </svg><span class="label">Affiliates</span>
-                </a>
-
+                @can('leads.view')
+                    <a href="{{ route('admin.leads.index') }}" title="Leads"
+                        class="{{ request()->routeIs('admin.leads.*') ? 'active' : '' }}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path>
+                            <path d="M14 3v5h5"></path>
+                            <path d="M9 13h6M9 17h4"></path>
+                        </svg><span class="label">Leads</span>
+                    </a>
+                @endcan
+                @can('affiliates.manage')
+                    <a href="{{ route('admin.affiliates.index') }}" title="Affiliates"
+                        class="{{ request()->routeIs('admin.affiliates.*') ? 'active' : '' }}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="9" cy="8" r="3.5"></circle>
+                            <path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"></path>
+                            <path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.8 3.1 2.6 3.5 5.2"></path>
+                        </svg><span class="label">Affiliates</span>
+                    </a>
+                @endcan
+                
                 <div class="nav-label">Settings</div>
-                <a href="{{ route('admin.integrations') }}" title="Integrations"
-                    class="{{ request()->routeIs('admin.integrations*') ? 'active' : '' }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M9 7V3M15 7V3"></path>
-                        <path d="M6 7h12v4a6 6 0 0 1-12 0z"></path>
-                        <path d="M12 17v4"></path>
-                    </svg><span class="label">Integrations</span>
-                </a>
-                <a href="{{ route('admin.users.index') }}" title="Users"
-                    class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="8" r="4"></circle>
-                        <path d="M4 21c.9-4 4-6.5 8-6.5s7.1 2.5 8 6.5"></path>
-                    </svg><span class="label">Users</span>
-                </a>
+                @can('integrations.view')
+                    <a href="{{ route('admin.integrations') }}" title="Integrations"
+                        class="{{ request()->routeIs('admin.integrations*') ? 'active' : '' }}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M9 7V3M15 7V3"></path>
+                            <path d="M6 7h12v4a6 6 0 0 1-12 0z"></path>
+                            <path d="M12 17v4"></path>
+                        </svg><span class="label">Integrations</span>
+                    </a>
+                @endcan
+                @can('users.manage')
+                    <a href="{{ route('admin.users.index') }}" title="Users"
+                        class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="8" r="4"></circle>
+                            <path d="M4 21c.9-4 4-6.5 8-6.5s7.1 2.5 8 6.5"></path>
+                        </svg><span class="label">Users</span>
+                    </a>
+                    <a href="{{ route('admin.roles.index') }}" title="Roles"
+                        class="{{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"></path>
+                            <path d="M9 12l2 2 4-4"></path>
+                        </svg><span class="label">Roles</span>
+                    </a>
+                @endcan
                 <a href="{{ route('admin.account') }}" title="Password"
                     class="{{ request()->routeIs('admin.account*') ? 'active' : '' }}">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
@@ -894,18 +917,20 @@
                         <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
                     </svg><span class="label">Password</span>
                 </a>
-                <a href="{{ url(config('horizon.path', 'horizon')) }}" target="_blank" rel="noopener"
-                    title="Horizon queue monitor">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3 12h4l3-8 4 16 3-8h4"></path>
-                    </svg><span class="label">Horizon <small>Queues</small></span>
-                    <svg class="ext" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path>
-                    </svg>
-                </a>
-            </nav>
+                @can('horizon.view')
+                    <a href="{{ url(config('horizon.path', 'horizon')) }}" target="_blank" rel="noopener"
+                        title="Horizon queue monitor">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M3 12h4l3-8 4 16 3-8h4"></path>
+                        </svg><span class="label">Horizon <small>Queues</small></span>
+                        <svg class="ext" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path>
+                        </svg>
+                    </a>
+                @endcan
+                </nav>
             <div class="side-foot">
                 <div class="side-user label">{{ auth()->user()->email }}</div>
                 <form method="POST" action="{{ route('admin.logout') }}">
