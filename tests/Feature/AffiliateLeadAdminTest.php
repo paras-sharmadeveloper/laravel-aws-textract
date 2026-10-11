@@ -26,7 +26,8 @@ class AffiliateLeadAdminTest extends TestCase
 
     public function test_root_form_renders_without_referral(): void
     {
-        $this->get('/')->assertOk()->assertSee('Your application.')->assertDontSee('Referred by');
+        $this->get('/')->assertOk()->assertSee('Your application.')->assertDontSee('Referred by')
+            ->assertSee('Owner contact info')->assertSee('Tax ID <span class="opt">(optional)</span>', false)->assertSee('0/7');
     }
 
     public function test_active_affiliate_link_shows_name_and_hidden_field(): void

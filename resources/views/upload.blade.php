@@ -426,6 +426,11 @@
             color: var(--req);
         }
 
+        .opt {
+            color: var(--ink-2);
+            font-weight: 400;
+        }
+
         .input {
             width: 100%;
             height: 52px;
@@ -1463,7 +1468,7 @@
                 <div class="step">
                     <div class="step-title">
                         <div><span class="step-num">01</span>
-                            <h3>Your contact info</h3>
+                            <h3>Owner contact info</h3>
                         </div>
                     </div>
                     <div class="grid-2">
@@ -1550,7 +1555,7 @@
                             </label>
                         </div>
                         <div class="stack-col">
-                            <div class="field-label">Tax ID <span class="req">*</span></div>
+                            <div class="field-label">Tax ID <span class="opt">(optional)</span></div>
                             <label class="upload stack" data-upload>
                                 <input type="file" name="tax_doc" class="sr-only"
                                     accept=".pdf,.jpg,.jpeg,.png,.heic" data-check="tax">
@@ -1744,7 +1749,6 @@
                             'email' => 'Email',
                             'id' => 'Owner ID',
                             'vc' => 'Voided check or bank letter',
-                            'tax' => 'Tax ID',
                             'statements' => 'Bank statements (12 mo.)',
                         ] as $key => $label)
                             <li data-item="{{ $key }}">
@@ -1759,7 +1763,7 @@
                     </ul>
                 </div>
                 <div class="submit-right">
-                    <div class="score"><strong id="score">0/8</strong><span>required complete</span></div>
+                    <div class="score"><strong id="score">0/7</strong><span>required complete</span></div>
                     <div class="bar">
                         <div id="scoreBar"></div>
                     </div>
@@ -1774,7 +1778,7 @@
             {{-- Floating checklist: follows the customer while they fill the form --}}
             <div class="float-bar" id="floatBar" aria-label="Application progress">
                 <div class="fb-progress">
-                    <div><strong id="fbScore">0/8</strong><span>required</span></div>
+                    <div><strong id="fbScore">0/7</strong><span>required</span></div>
                     <div class="bar">
                         <div id="fbBar"></div>
                     </div>
@@ -1787,7 +1791,6 @@
                         'email' => 'Email',
                         'id' => 'Owner ID',
                         'vc' => 'Voided check',
-                        'tax' => 'Tax ID',
                         'statements' => 'Bank statements',
                     ] as $key => $label)
                         <li>
@@ -2105,7 +2108,6 @@
                 email: () => document.getElementById('ownerEmail'),
                 id: () => form.querySelector('[name="driving_license"]'),
                 vc: () => form.querySelector('[name="bank_doc"]'),
-                tax: () => form.querySelector('[name="tax_doc"]'),
                 statements: () => newLoc.value === '1' ? projInput : bankInput,
             };
 
@@ -2135,10 +2137,10 @@
                     email: emailRegex.test(val('email')),
                     id: hasFile('driving_license'),
                     vc: hasFile('bank_doc'),
-                    tax: hasFile('tax_doc'),
                     statements: isNew ? hasFile('projections') : bankFiles > 0,
                 };
 
+                const total = Object.keys(state).length;
                 let done = 0;
                 let next = null;
                 Object.keys(state).forEach(function(key) {
@@ -2149,11 +2151,11 @@
                 });
 
                 const uploads = uploadState();
-                const complete = done === 8 && uploads.pending === 0;
-                document.getElementById('score').textContent = done + '/8';
-                document.getElementById('fbScore').textContent = done + '/8';
-                document.getElementById('scoreBar').style.width = (done / 8 * 100) + '%';
-                document.getElementById('fbBar').style.width = (done / 8 * 100) + '%';
+                const complete = done === total && uploads.pending === 0;
+                document.getElementById('score').textContent = done + '/' + total;
+                document.getElementById('fbScore').textContent = done + '/' + total;
+                document.getElementById('scoreBar').style.width = (done / total * 100) + '%';
+                document.getElementById('fbBar').style.width = (done / total * 100) + '%';
                 submitButtons.forEach(function(btn) {
                     if (btn.classList.contains('loading')) return;
                     btn.disabled = !complete;
@@ -2164,7 +2166,7 @@
                 });
 
                 const nextEl = document.getElementById('fbNext');
-                if (done === 8 && uploads.pending) {
+                if (done === total && uploads.pending) {
                     nextEl.innerHTML = 'Uploading <b></b> file(s)…';
                     nextEl.querySelector('b').textContent = uploads.pending;
                 } else if (complete) {
