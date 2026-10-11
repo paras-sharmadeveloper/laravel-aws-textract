@@ -1406,7 +1406,7 @@
             @endif
         @endif
         <div class="eyebrow">APPLICATION · ABOUT 5 MINUTES</div>
-        <h1>See your number in <em>1–3 business days.</em></h1>
+        <h1>See your number in <em>1–2 business days.</em></h1>
         <p>Upload your documents below. No cost, no obligation — and you'll hear from us the same day.</p>
         <div class="perks">
             @foreach (['No interest, ever', 'No monthly payments', 'Not a loan — not debt'] as $perk)
