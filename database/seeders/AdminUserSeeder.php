@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -25,7 +24,7 @@ class AdminUserSeeder extends Seeder
 
         User::firstOrCreate(
             ['email' => $email],
-            ['name' => 'DPS Admin', 'password' => $password, 'role_id' => Role::admin()->id]
+            ['name' => 'DPS Admin', 'password' => $password]
         );
     }
 }

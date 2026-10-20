@@ -27,9 +27,9 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
      */
     protected function gate(): void
     {
-        // Only admin portal users whose role grants Horizon access
+        // Any signed-in admin portal user may open the queue dashboard
         Gate::define('viewHorizon', function ($user = null) {
-            return $user?->hasPermission('horizon.view') ?? false;
+            return $user !== null;
         });
     }
 }

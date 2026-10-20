@@ -12,10 +12,6 @@ class LeadController extends Controller
 {
     public function index(Request $request)
     {
-        if ($request->user()->cannot('leads.view')) {
-            return redirect($request->user()->homeUrl());
-        }
-
         $leads = Lead::with('affiliate')
             ->withCount('documents')
             ->when($request->status, fn($q, $status) => $q->where('status', $status))

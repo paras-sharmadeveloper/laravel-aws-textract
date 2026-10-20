@@ -215,27 +215,6 @@
             font-weight: 600;
         }
 
-        .referral-contact {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px 20px;
-            margin-top: -10px;
-            font-size: 15px;
-        }
-
-        .referral-contact a {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            color: var(--paper);
-            overflow-wrap: anywhere;
-        }
-
-        .referral-contact a:hover {
-            color: var(--gold);
-        }
-
         .eyebrow {
             font-size: 14px;
             letter-spacing: 4px;
@@ -424,11 +403,6 @@
 
         .req {
             color: var(--req);
-        }
-
-        .opt {
-            color: var(--ink-2);
-            font-weight: 400;
         }
 
         .input {
@@ -1388,30 +1362,9 @@
                 <div class="referral-avatar">{{ $affiliate->initials() }}</div>
                 <span>Referred by <strong>{{ $affiliate->name }}</strong></span>
             </div>
-            @if ($affiliate->email || $affiliate->phone)
-                <div class="referral-contact">
-                    @if ($affiliate->email)
-                        <a href="mailto:{{ $affiliate->email }}">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-                                <path d="M3 7l9 6 9-6"></path>
-                            </svg>{{ $affiliate->email }}
-                        </a>
-                    @endif
-                    @if ($affiliate->phone)
-                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $affiliate->phone) }}">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"></path>
-                            </svg>{{ $affiliate->phone }}
-                        </a>
-                    @endif
-                </div>
-            @endif
         @endif
         <div class="eyebrow">APPLICATION · ABOUT 5 MINUTES</div>
-        <h1>See your number in <em>1–2 business days.</em></h1>
+        <h1>See your number in <em>1–3 business days.</em></h1>
         <p>Upload your documents below. No cost, no obligation — and you'll hear from us the same day.</p>
         <div class="perks">
             @foreach (['No interest, ever', 'No monthly payments', 'Not a loan — not debt'] as $perk)
@@ -1468,7 +1421,7 @@
                 <div class="step">
                     <div class="step-title">
                         <div><span class="step-num">01</span>
-                            <h3>Owner contact info</h3>
+                            <h3>Your contact info</h3>
                         </div>
                     </div>
                     <div class="grid-2">
@@ -1555,7 +1508,7 @@
                             </label>
                         </div>
                         <div class="stack-col">
-                            <div class="field-label">Tax ID <span class="opt">(optional)</span></div>
+                            <div class="field-label">Tax ID <span class="req">*</span></div>
                             <label class="upload stack" data-upload>
                                 <input type="file" name="tax_doc" class="sr-only"
                                     accept=".pdf,.jpg,.jpeg,.png,.heic" data-check="tax">
@@ -1749,6 +1702,7 @@
                             'email' => 'Email',
                             'id' => 'Owner ID',
                             'vc' => 'Voided check or bank letter',
+                            'tax' => 'Tax ID',
                             'statements' => 'Bank statements (12 mo.)',
                         ] as $key => $label)
                             <li data-item="{{ $key }}">
@@ -1763,7 +1717,7 @@
                     </ul>
                 </div>
                 <div class="submit-right">
-                    <div class="score"><strong id="score">0/7</strong><span>required complete</span></div>
+                    <div class="score"><strong id="score">0/8</strong><span>required complete</span></div>
                     <div class="bar">
                         <div id="scoreBar"></div>
                     </div>
@@ -1778,7 +1732,7 @@
             {{-- Floating checklist: follows the customer while they fill the form --}}
             <div class="float-bar" id="floatBar" aria-label="Application progress">
                 <div class="fb-progress">
-                    <div><strong id="fbScore">0/7</strong><span>required</span></div>
+                    <div><strong id="fbScore">0/8</strong><span>required</span></div>
                     <div class="bar">
                         <div id="fbBar"></div>
                     </div>
@@ -1791,6 +1745,7 @@
                         'email' => 'Email',
                         'id' => 'Owner ID',
                         'vc' => 'Voided check',
+                        'tax' => 'Tax ID',
                         'statements' => 'Bank statements',
                     ] as $key => $label)
                         <li>
@@ -2108,6 +2063,7 @@
                 email: () => document.getElementById('ownerEmail'),
                 id: () => form.querySelector('[name="driving_license"]'),
                 vc: () => form.querySelector('[name="bank_doc"]'),
+                tax: () => form.querySelector('[name="tax_doc"]'),
                 statements: () => newLoc.value === '1' ? projInput : bankInput,
             };
 
@@ -2137,10 +2093,10 @@
                     email: emailRegex.test(val('email')),
                     id: hasFile('driving_license'),
                     vc: hasFile('bank_doc'),
+                    tax: hasFile('tax_doc'),
                     statements: isNew ? hasFile('projections') : bankFiles > 0,
                 };
 
-                const total = Object.keys(state).length;
                 let done = 0;
                 let next = null;
                 Object.keys(state).forEach(function(key) {
@@ -2151,11 +2107,11 @@
                 });
 
                 const uploads = uploadState();
-                const complete = done === total && uploads.pending === 0;
-                document.getElementById('score').textContent = done + '/' + total;
-                document.getElementById('fbScore').textContent = done + '/' + total;
-                document.getElementById('scoreBar').style.width = (done / total * 100) + '%';
-                document.getElementById('fbBar').style.width = (done / total * 100) + '%';
+                const complete = done === 8 && uploads.pending === 0;
+                document.getElementById('score').textContent = done + '/8';
+                document.getElementById('fbScore').textContent = done + '/8';
+                document.getElementById('scoreBar').style.width = (done / 8 * 100) + '%';
+                document.getElementById('fbBar').style.width = (done / 8 * 100) + '%';
                 submitButtons.forEach(function(btn) {
                     if (btn.classList.contains('loading')) return;
                     btn.disabled = !complete;
@@ -2166,7 +2122,7 @@
                 });
 
                 const nextEl = document.getElementById('fbNext');
-                if (done === total && uploads.pending) {
+                if (done === 8 && uploads.pending) {
                     nextEl.innerHTML = 'Uploading <b></b> file(s)…';
                     nextEl.querySelector('b').textContent = uploads.pending;
                 } else if (complete) {

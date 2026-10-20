@@ -122,37 +122,21 @@ class IntakeService
                 continue;
             }
 
-            $merged = $this->pdfService->mergeMixedFiles($files[$field]);
+            $mergedPdfPath = $this->pdfService->mergeMixedFiles($files[$field]);
 
-            // PDFs that couldn't be flattened are stored untouched next to the
-            // merged file: supportingdoc.pdf, supportingdoc-2.pdf, ...
-            $paths = array_values(array_filter([$merged['merged'], ...$merged['separate']]));
-
-            if (empty($paths)) {
+            if (!file_exists($mergedPdfPath) || filesize($mergedPdfPath) == 0) {
                 throw new \Exception($error);
             }
 
-            $s3Keys = [];
-
-            foreach ($paths as $index => $path) {
-
-                if (!file_exists($path) || filesize($path) == 0) {
-                    throw new \Exception($error);
-                }
-
-                $name = $index === 0
-                    ? $fileName
-                    : pathinfo($fileName, PATHINFO_FILENAME) . '-' . ($index + 1) . '.pdf';
-
-                $s3Key = $this->s3Service->uploadFile($path, "uploads/$dealFolder/$name");
-
-                $s3Keys[] = $s3Key;
-                $leadDocuments[] = ['category' => $category, 'file_name' => $name, 's3_key' => $s3Key];
-            }
+            $s3Key = $this->s3Service->uploadFile(
+                $mergedPdfPath,
+                "uploads/$dealFolder/$fileName"
+            );
 
             $result['documents'][$fileName] = [
-                's3_keys' => $s3Keys
+                's3_keys' => [$s3Key]
             ];
+            $leadDocuments[] = ['category' => $category, 'file_name' => $fileName, 's3_key' => $s3Key];
         }
 
         $result['lead_documents'] = $leadDocuments;

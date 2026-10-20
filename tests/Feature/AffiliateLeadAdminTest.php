@@ -7,7 +7,6 @@ use App\Jobs\PrepareUploadsJob;
 use App\Jobs\ProcessOcrJob;
 use App\Models\Affiliate;
 use App\Models\Lead;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -21,13 +20,12 @@ class AffiliateLeadAdminTest extends TestCase
 
     private function admin(): User
     {
-        return User::create(['name' => 'Admin', 'email' => 'desh@dpspayments.com', 'password' => 'Test-Pass-123', 'role_id' => Role::admin()->id]);
+        return User::create(['name' => 'Admin', 'email' => 'desh@dpspayments.com', 'password' => 'Test-Pass-123']);
     }
 
     public function test_root_form_renders_without_referral(): void
     {
-        $this->get('/')->assertOk()->assertSee('Your application.')->assertDontSee('Referred by')
-            ->assertSee('Owner contact info')->assertSee('Tax ID <span class="opt">(optional)</span>', false)->assertSee('0/7');
+        $this->get('/')->assertOk()->assertSee('Your application.')->assertDontSee('Referred by');
     }
 
     public function test_active_affiliate_link_shows_name_and_hidden_field(): void
@@ -195,16 +193,5 @@ class AffiliateLeadAdminTest extends TestCase
 
         $this->post('/admin/logout');
         $this->post('/admin/login', ['email' => 'desh@dpspayments.com', 'password' => 'NewPass123'])->assertRedirect('/admin');
-    }
-
-    public function test_affiliate_page_shows_both_email_and_phone(): void
-    {
-        Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe', 'email' => 'jane@example.com', 'phone' => '(555) 555-0100']);
-
-        $this->get('/janedoe')
-            ->assertOk()
-            ->assertSee('href="mailto:jane@example.com"', false)
-            ->assertSee('href="tel:5555550100"', false)
-            ->assertSee('(555) 555-0100');
     }
 }

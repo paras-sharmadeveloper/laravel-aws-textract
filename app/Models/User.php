@@ -21,7 +21,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role_id',
     ];
 
     /**
@@ -45,29 +44,5 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    public function role()
-    {
-        return $this->belongsTo(Role::class);
-    }
-
-    public function hasPermission(string $permission): bool
-    {
-        return (bool) $this->role?->allows($permission);
-    }
-
-    /**
-     * First admin page this user may open, so sign-in never lands on a 403.
-     */
-    public function homeUrl(): string
-    {
-        return match (true) {
-            $this->hasPermission('leads.view') => route('admin.leads.index'),
-            $this->hasPermission('affiliates.manage') => route('admin.affiliates.index'),
-            $this->hasPermission('integrations.view') => route('admin.integrations'),
-            $this->hasPermission('users.manage') => route('admin.users.index'),
-            default => route('admin.account'),
-        };
     }
 }
