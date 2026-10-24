@@ -51,6 +51,9 @@ return [
             // e.g. https://yourcompany.pipedrive.com — used for deal links in the admin portal
             'app_url' => env('PIPEDRIVE_APP_URL'),
     ],
-
+    'qpdf' => [
+            // Used to flatten fillable PDFs before merging supporting documents
+            'binary' => env('QPDF_BINARY', 'qpdf'),
+    ],
 
 ];

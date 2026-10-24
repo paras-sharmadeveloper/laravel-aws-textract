@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use setasign\Fpdi\Tcpdf\Fpdi;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Process;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 
@@ -152,9 +154,24 @@ class PdfService
     |-------------------------------------------------------
     */
 
+    /**
+     * @return array{merged: ?string, separate: string[]} The merged PDF (null when
+     *         nothing was mergeable) and PDFs that must be stored untouched.
+     */
     public function mergeMixedFiles(array $files)
     {
+        // A single PDF needs no merge. Re-importing it through FPDI drops
+        // AcroForm fields, which wipes the values from filled fillable forms.
+        if (count($files) === 1) {
+            $file = reset($files);
+
+            if (strtolower($file->getClientOriginalExtension()) === 'pdf') {
+                return ['merged' => $file->getRealPath(), 'separate' => []];
+            }
+        }
+
         $pdfPaths = [];
+        $separate = [];
 
         foreach ($files as $file) {
 
@@ -165,13 +182,59 @@ class PdfService
                 $pdfPaths[] = $this->imageToPdf($file->getRealPath());
             } elseif ($ext === 'pdf') {
 
-                $pdfPaths[] = $file->getRealPath();
+                // Flatten so filled form values survive the FPDI merge. If
+                // that fails, keep the PDF as its own file instead of losing data.
+                $flattened = $this->flattenPdf($file->getRealPath());
+
+                if ($flattened) {
+                    $pdfPaths[] = $flattened;
+                } else {
+                    $separate[] = $file->getRealPath();
+                }
             }
         }
         // \Log::info('PDF PATH 2', [
         //     'path' => $pdfPaths,
         // ]);
 
-        return $this->mergePdfs($pdfPaths);
+        return [
+            'merged' => $pdfPaths ? $this->mergePdfs($pdfPaths) : null,
+            'separate' => $separate,
+        ];
+    }
+
+    /*
+    |-------------------------------------------------------
+    | Flatten form fields into page content (needs qpdf)
+    |-------------------------------------------------------
+    */
+    public function flattenPdf(string $path): ?string
+    {
+        $output = tempnam(sys_get_temp_dir(), 'flat') . '.pdf';
+
+        try {
+            $result = Process::run([
+                config('services.qpdf.binary', 'qpdf'),
+                '--flatten-annotations=all',
+                '--generate-appearances',
+                $path,
+                $output,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('qpdf flatten failed to start', ['error' => $e->getMessage()]);
+            return null;
+        }
+
+        // qpdf exits with 3 when it succeeded but printed warnings
+        if (in_array($result->exitCode(), [0, 3], true) && is_file($output) && filesize($output) > 0) {
+            return $output;
+        }
+
+        Log::warning('qpdf flatten failed', [
+            'exit_code' => $result->exitCode(),
+            'error' => $result->errorOutput(),
+        ]);
+
+        return null;
     }
 }

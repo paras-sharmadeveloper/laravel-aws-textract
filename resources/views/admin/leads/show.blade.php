@@ -96,7 +96,7 @@
                     <div class="error-box" style="margin-top: 18px">{{ $lead->error }}</div>
                 @endif
 
-                @if ($lead->canRetry())
+                @if ($lead->canRetry() && auth()->user()->can('leads.retry'))
                     <form method="POST" action="{{ route('admin.leads.retry', $lead) }}" style="margin-top: 18px"
                         data-confirm="{{ $lead->pipedrive_deal_id ? 'Re-send the documents that did not attach to deal #' . $lead->pipedrive_deal_id . '?' : 'Run this lead through OCR and Pipedrive again? A new deal will be created.' }}">
                         @csrf

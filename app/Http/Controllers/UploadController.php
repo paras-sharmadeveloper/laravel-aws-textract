@@ -20,7 +20,7 @@ class UploadController extends Controller
     }
 
     /**
-     * Referral link (e.g. /jhonrocha). Only affiliates created and active in the
+     * Referral link (e.g. /johnsmith). Only affiliates created and active in the
      * admin portal resolve — any other slug is a 404.
      */
     public function affiliate(string $slug)
