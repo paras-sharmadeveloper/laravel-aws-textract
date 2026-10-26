@@ -2104,7 +2104,7 @@
                 bankInput.disabled = isNew;
                 projInput.disabled = !isNew;
                 document.querySelector('[data-item="statements"] [data-label]').textContent = isNew ?
-                    '1st Year Projections' : 'Bank statements (12 mo.)';
+                    '1st Year Projections' : 'Bank statements';
                 document.querySelector('[data-jump="statements"] [data-label]').textContent = isNew ? 'Projections' :
                     'Bank statements';
                 update();
