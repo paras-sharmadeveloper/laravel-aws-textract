@@ -1358,18 +1358,21 @@
     @php
         $contactHref = $affiliate?->email
             ? 'mailto:' . $affiliate->email
-            : ($affiliate?->phone ? 'tel:' . preg_replace('/[^0-9+]/', '', $affiliate->phone) : 'mailto:info@dpspayments.com');
+            : ($affiliate?->phone
+                ? 'tel:' . preg_replace('/[^0-9+]/', '', $affiliate->phone)
+                : 'mailto:info@dpspayments.com');
     @endphp
 
     <header class="site-header">
         <div class="brand-wrap">
-            <a href="{{ $affiliate ? url($affiliate->slug) : url('/') }}" class="brand" aria-label="DPS Payments Corp.">
+            <a href="{{ $affiliate ? url($affiliate->slug) : url('/') }}" class="brand"
+                aria-label="DPS Payments Corp.">
                 <img src="{{ asset('images/dps-logo.png') }}" alt="DPS Payments Corp." class="brand-logo">
             </a>
             <div class="v-rule"></div>
             <div class="secure">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3D8B4F" stroke-width="2.2"
-                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3D8B4F"
+                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="4" y="11" width="16" height="10" rx="2"></rect>
                     <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
                 </svg>
@@ -1392,8 +1395,8 @@
                 <div class="referral-contact">
                     @if ($affiliate->email)
                         <a href="mailto:{{ $affiliate->email }}">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                                 <path d="M3 7l9 6 9-6"></path>
                             </svg>{{ $affiliate->email }}
@@ -1401,9 +1404,11 @@
                     @endif
                     @if ($affiliate->phone)
                         <a href="tel:{{ preg_replace('/[^0-9+]/', '', $affiliate->phone) }}">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"></path>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path
+                                    d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2">
+                                </path>
                             </svg>{{ $affiliate->phone }}
                         </a>
                     @endif
@@ -1416,8 +1421,8 @@
         <div class="perks">
             @foreach (['No interest, ever', 'No monthly payments', 'Not a loan — not debt'] as $perk)
                 <div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9AD62" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9AD62"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M5 12l5 5L20 7"></path>
                     </svg>{{ $perk }}
                 </div>
@@ -1456,11 +1461,13 @@
             </div>
         @endif
 
-        <form method="POST" action="/upload" enctype="multipart/form-data" id="uploadForm" class="shell" novalidate>
+        <form method="POST" action="/upload" enctype="multipart/form-data" id="uploadForm" class="shell"
+            novalidate>
             @csrf
             <input type="hidden" name="affiliate" value="{{ $affiliate?->slug }}">
             <input type="hidden" name="uploads" id="uploadsManifest" value="">
-            <input type="hidden" name="new_location" id="newLocation" value="{{ old('new_location', 0) ? 1 : 0 }}">
+            <input type="hidden" name="new_location" id="newLocation"
+                value="{{ old('new_location', 0) ? 1 : 0 }}">
 
             <div class="app-card">
 
@@ -1475,8 +1482,8 @@
                         <div class="field">
                             <label for="ownerName">Your full name <span class="req">*</span></label>
                             <input id="ownerName" name="owner_name" type="text" class="input" required
-                                autocomplete="name" placeholder="First and last name" value="{{ old('owner_name') }}"
-                                data-check="name">
+                                autocomplete="name" placeholder="First and last name"
+                                value="{{ old('owner_name') }}" data-check="name">
                         </div>
                         <div class="field">
                             <label for="bizName">Business name (DBA) <span class="req">*</span></label>
@@ -1525,8 +1532,8 @@
                                 <input type="file" name="driving_license" class="sr-only"
                                     accept=".pdf,.jpg,.jpeg,.png,.heic" data-check="id">
                                 <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                                        stroke-linejoin="round" aria-hidden="true">
+                                        fill="none" stroke="currentColor" stroke-width="1.8"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                                         <circle cx="9" cy="11" r="2"></circle>
                                         <path d="M6 16c.6-1.5 1.8-2 3-2s2.4.5 3 2"></path>
@@ -1543,8 +1550,8 @@
                                 <input type="file" name="bank_doc" class="sr-only"
                                     accept=".pdf,.jpg,.jpeg,.png,.heic" data-check="vc">
                                 <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                                        stroke-linejoin="round" aria-hidden="true">
+                                        fill="none" stroke="currentColor" stroke-width="1.8"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <rect x="2" y="6" width="20" height="12" rx="2"></rect>
                                         <path d="M2 10h20"></path>
                                         <path d="M6 15h4"></path>
@@ -1560,8 +1567,8 @@
                                 <input type="file" name="tax_doc" class="sr-only"
                                     accept=".pdf,.jpg,.jpeg,.png,.heic" data-check="tax">
                                 <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                                        stroke-linejoin="round" aria-hidden="true">
+                                        fill="none" stroke="currentColor" stroke-width="1.8"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path>
                                         <path d="M14 3v5h5"></path>
                                         <path d="M9 13h6M9 17h4"></path>
@@ -1591,7 +1598,7 @@
 
                         <div class="stack-col" id="bankPanel">
                             <div class="row-between" style="font-size: 14px; color: var(--ink-2)">
-                                <span>Last 12 months · one file per month</span>
+                                <span>Upto 12 months </span>
                                 <span style="font-weight: 600; color: var(--ink)"><span id="bankCount">0</span> of 12
                                     uploaded</span>
                             </div>
@@ -1604,13 +1611,13 @@
                                 <input type="file" name="statement_bank[]" multiple class="sr-only"
                                     accept=".pdf,.jpg,.jpeg,.png,.heic" data-check="bank">
                                 <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                                        stroke-linejoin="round" aria-hidden="true">
+                                        fill="none" stroke="currentColor" stroke-width="1.8"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M3 10l9-6 9 6"></path>
                                         <path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"></path>
                                         <path d="M3 20h18"></path>
                                     </svg></div>
-                                <div class="upload-copy"><span class="upload-title">Upload 12 months of bank
+                                <div class="upload-copy"><span class="upload-title">Upload 3+ months of bank
                                         statements</span><span class="upload-hint">PDF, JPG, PNG, HEIC · 10MB per file
                                         · up to 20 files</span></div>
                             </label>
@@ -1625,8 +1632,8 @@
                                     accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png,.heic" data-check="projections"
                                     disabled>
                                 <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                                        stroke-linejoin="round" aria-hidden="true">
+                                        fill="none" stroke="currentColor" stroke-width="1.8"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M3 3v18h18"></path>
                                         <path d="M7 15l4-4 3 3 5-6"></path>
                                     </svg></div>
@@ -1658,8 +1665,8 @@
                         <label class="upload" data-upload data-multi data-max="20">
                             <input type="file" name="statement_ccp[]" multiple class="sr-only"
                                 accept=".pdf,.jpg,.jpeg,.png,.heic">
-                            <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                            <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                                     stroke-linejoin="round" aria-hidden="true">
                                     <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path>
                                     <path d="M14 3v5h5"></path>
@@ -1677,8 +1684,8 @@
                         <label class="upload" data-upload data-multi data-max="20">
                             <input type="file" name="statement_pos[]" multiple class="sr-only"
                                 accept=".pdf,.jpg,.jpeg,.png,.heic">
-                            <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                            <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                                     stroke-linejoin="round" aria-hidden="true">
                                     <rect x="4" y="3" width="16" height="18" rx="2"></rect>
                                     <path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M16 11v4"></path>
@@ -1705,8 +1712,8 @@
                                 <input type="file" name="pictures[]" multiple class="sr-only"
                                     accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <div class="upload-icon soft"><svg width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                                        stroke-linejoin="round" aria-hidden="true">
+                                        fill="none" stroke="currentColor" stroke-width="1.8"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                                         <circle cx="9" cy="10" r="1.5"></circle>
                                         <path d="M21 16l-5-5-8 8"></path>
@@ -1721,8 +1728,8 @@
                                 <input type="file" name="other_doc[]" multiple class="sr-only"
                                     accept=".pdf,.jpg,.jpeg,.png,.heic">
                                 <div class="upload-icon soft"><svg width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                                        stroke-linejoin="round" aria-hidden="true">
+                                        fill="none" stroke="currentColor" stroke-width="1.8"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path
                                             d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7L14 5.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8">
                                         </path>
@@ -1743,17 +1750,17 @@
                     <div class="submit-heading">Complete the checklist, <em>then send it.</em></div>
                     <ul class="checklist" id="checklist">
                         @foreach ([
-                            'name' => 'Full name',
-                            'business' => 'Business name',
-                            'phone' => 'Cell phone',
-                            'email' => 'Email',
-                            'id' => 'Owner ID',
-                            'vc' => 'Voided check or bank letter',
-                            'statements' => 'Bank statements (12 mo.)',
-                        ] as $key => $label)
+        'name' => 'Full name',
+        'business' => 'Business name',
+        'phone' => 'Cell phone',
+        'email' => 'Email',
+        'id' => 'Owner ID',
+        'vc' => 'Voided check or bank letter',
+        'statements' => 'Bank statements',
+    ] as $key => $label)
                             <li data-item="{{ $key }}">
-                                <span class="dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-                                        stroke="#121E18" stroke-width="4" stroke-linecap="round"
+                                <span class="dot"><svg width="10" height="10" viewBox="0 0 24 24"
+                                        fill="none" stroke="#121E18" stroke-width="4" stroke-linecap="round"
                                         stroke-linejoin="round" aria-hidden="true">
                                         <path d="M5 12l5 5L20 7"></path>
                                     </svg></span>
@@ -1785,18 +1792,18 @@
                 </div>
                 <ul class="fb-list">
                     @foreach ([
-                        'name' => 'Name',
-                        'business' => 'Business',
-                        'phone' => 'Phone',
-                        'email' => 'Email',
-                        'id' => 'Owner ID',
-                        'vc' => 'Voided check',
-                        'statements' => 'Bank statements',
-                    ] as $key => $label)
+        'name' => 'Name',
+        'business' => 'Business',
+        'phone' => 'Phone',
+        'email' => 'Email',
+        'id' => 'Owner ID',
+        'vc' => 'Voided check',
+        'statements' => 'Bank statements',
+    ] as $key => $label)
                         <li>
                             <button type="button" class="fb-chip" data-jump="{{ $key }}">
-                                <span class="dot"><svg width="9" height="9" viewBox="0 0 24 24" fill="none"
-                                        stroke="#121E18" stroke-width="4" stroke-linecap="round"
+                                <span class="dot"><svg width="9" height="9" viewBox="0 0 24 24"
+                                        fill="none" stroke="#121E18" stroke-width="4" stroke-linecap="round"
                                         stroke-linejoin="round" aria-hidden="true">
                                         <path d="M5 12l5 5L20 7"></path>
                                     </svg></span>
@@ -1930,7 +1937,10 @@
 
             function enqueue(input, entry) {
                 if (!direct) return;
-                queue.push({ input, entry });
+                queue.push({
+                    input,
+                    entry
+                });
                 pump();
             }
 
@@ -1991,7 +2001,8 @@
                             render(input);
                             update();
                         };
-                        xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('s3 ' + xhr.status));
+                        xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(
+                            new Error('s3 ' + xhr.status));
                         xhr.onerror = () => reject(new Error('network'));
                         xhr.onabort = () => reject(new Error('aborted'));
                         xhr.send(data);
@@ -2027,9 +2038,16 @@
 
                     const added = [];
                     (isMulti ? picked : picked.slice(0, 1)).forEach(function(f) {
-                        const dupe = entries.some(x => x.file.name === f.name && x.file.size === f.size && x.file.lastModified === f.lastModified);
+                        const dupe = entries.some(x => x.file.name === f.name && x.file.size ===
+                            f.size && x.file.lastModified === f.lastModified);
                         if (!dupe) {
-                            const entry = { file: f, status: direct ? 'queued' : 'local', loaded: 0, key: null, xhr: null };
+                            const entry = {
+                                file: f,
+                                status: direct ? 'queued' : 'local',
+                                loaded: 0,
+                                key: null,
+                                xhr: null
+                            };
                             entries.push(entry);
                             added.push(entry);
                         }
@@ -2050,7 +2068,9 @@
             });
 
             function uploadState() {
-                let total = 0, loaded = 0, pending = 0;
+                let total = 0,
+                    loaded = 0,
+                    pending = 0;
                 store.forEach(function(entries, input) {
                     if (input.disabled) return;
                     entries.forEach(function(e) {
@@ -2061,7 +2081,10 @@
                         }
                     });
                 });
-                return { pending, percent: total ? Math.round(loaded / total * 100) : 100 };
+                return {
+                    pending,
+                    percent: total ? Math.round(loaded / total * 100) : 100
+                };
             }
 
             // New location toggle: swap bank statements for 1st Year Projections
@@ -2073,14 +2096,17 @@
 
             function setNewLocation(isNew) {
                 newLoc.value = isNew ? 1 : 0;
-                document.querySelectorAll('[data-new]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.new === '1') === isNew)));
+                document.querySelectorAll('[data-new]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset
+                    .new === '1') === isNew)));
                 bankPanel.hidden = isNew;
                 projPanel.hidden = !isNew;
                 // Disabled inputs are not submitted, so only the visible option is sent
                 bankInput.disabled = isNew;
                 projInput.disabled = !isNew;
-                document.querySelector('[data-item="statements"] [data-label]').textContent = isNew ? '1st Year Projections' : 'Bank statements (12 mo.)';
-                document.querySelector('[data-jump="statements"] [data-label]').textContent = isNew ? 'Projections' : 'Bank statements';
+                document.querySelector('[data-item="statements"] [data-label]').textContent = isNew ?
+                    '1st Year Projections' : 'Bank statements (12 mo.)';
+                document.querySelector('[data-jump="statements"] [data-label]').textContent = isNew ? 'Projections' :
+                    'Bank statements';
                 update();
             }
 
@@ -2178,7 +2204,8 @@
                 }
 
                 document.getElementById('bankCount').textContent = Math.min(bankFiles, 12);
-                document.querySelectorAll('#bankMonths div').forEach((bar, i) => bar.classList.toggle('on', i < bankFiles));
+                document.querySelectorAll('#bankMonths div').forEach((bar, i) => bar.classList.toggle('on', i <
+                    bankFiles));
                 document.getElementById('ccpCount').textContent = Math.min(entriesOf(ccpInput).length, 3);
             }
 
@@ -2213,7 +2240,10 @@
                 store.forEach(function(entries, input) {
                     if (input.disabled) return;
                     const done = entries.filter(en => en.status === 'done');
-                    if (done.length) manifest[fieldOf(input)] = done.map(en => ({ key: en.key, name: en.file.name }));
+                    if (done.length) manifest[fieldOf(input)] = done.map(en => ({
+                        key: en.key,
+                        name: en.file.name
+                    }));
                     syncInput(input, true);
                 });
                 document.getElementById('uploadsManifest').value = JSON.stringify(manifest);
@@ -2231,6 +2261,7 @@
             const floatBar = document.getElementById('floatBar');
             const appCard = form.querySelector('.app-card');
             const panel = form.querySelector('.submit-panel');
+
             function placeBar() {
                 const inForm = appCard.getBoundingClientRect().top < 40;
                 const panelVisible = panel.getBoundingClientRect().top < window.innerHeight - 60;
