@@ -1598,7 +1598,7 @@
 
                         <div class="stack-col" id="bankPanel">
                             <div class="row-between" style="font-size: 14px; color: var(--ink-2)">
-                                <span>Upto 12 months </span>
+                                <span>Up to 12 months </span>
                                 <span style="font-weight: 600; color: var(--ink)"><span id="bankCount">0</span> of 12
                                     uploaded</span>
                             </div>
