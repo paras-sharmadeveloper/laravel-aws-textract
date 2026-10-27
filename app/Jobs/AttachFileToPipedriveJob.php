@@ -49,7 +49,7 @@ class AttachFileToPipedriveJob implements ShouldQueue
             );
 
             Lead::trackAttachment($this->leadId, $this->file['s3_key'], $this->file['file_name'] ?? 'document.pdf', $attached);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             Lead::trackAttachment($this->leadId, $this->file['s3_key'], $this->file['file_name'] ?? 'document.pdf', false, $e->getMessage());
 
@@ -63,12 +63,19 @@ class AttachFileToPipedriveJob implements ShouldQueue
         }
     }
 
-    public function failed(\Exception $exception)
+    /**
+     * Reached when the job is killed (e.g. timeout), which also stops the rest of
+     * the chain — so this file and the ones that will never run are marked failed,
+     * otherwise the lead sits in "processing" forever with no retry button.
+     */
+    public function failed(\Throwable $exception)
     {
         Log::critical("AttachFile Job Failed Completely", [
             'deal_id' => $this->dealId,
             'file' => $this->file,
             'error' => $exception->getMessage()
         ]);
+
+        Lead::failPendingAttachments($this->leadId, 'Attachment did not finish: ' . $exception->getMessage());
     }
 }

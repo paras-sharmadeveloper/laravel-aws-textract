@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\AttachFilesToPipedriveJob;
+use App\Jobs\ParseAndCreateLeadJob;
 use App\Jobs\PrepareUploadsJob;
 use App\Jobs\ProcessOcrJob;
 use App\Models\Affiliate;
@@ -10,7 +11,9 @@ use App\Models\Lead;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Services\PipedriveService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -182,6 +185,63 @@ class AffiliateLeadAdminTest extends TestCase
         Queue::assertPushed(AttachFilesToPipedriveJob::class);
         $this->assertSame('pending', $withDeal->documents()->where('s3_key', 'k2')->value('attach_status'));
         $this->assertSame('attached', $withDeal->documents()->where('s3_key', 'k1')->value('attach_status'));
+    }
+
+    public function test_resync_sends_ocr_result_straight_to_pipedrive(): void
+    {
+        Queue::fake();
+        $this->actingAs($this->admin());
+
+        $lead = Lead::create(['email' => 'a@b.co', 'phone' => '1234567890', 'business_name' => 'Biz', 'status' => 'failed', 'stage' => 'pipedrive', 'payload' => ['lead_id' => 1], 'ocr_result' => ['lead_id' => 1, 'documents' => []]]);
+        $lead->documents()->create(['category' => 'ID', 'file_name' => 'ID.pdf', 's3_key' => 'k1', 'attach_status' => 'failed']);
+
+        $this->get('/admin')->assertSee('Resync to Pipedrive');
+        $this->get("/admin/leads/{$lead->id}")->assertSee('Resync to Pipedrive');
+
+        $this->post("/admin/leads/{$lead->id}/retry")->assertSessionHas('success');
+        Queue::assertPushed(ParseAndCreateLeadJob::class);
+        Queue::assertNotPushed(ProcessOcrJob::class);
+        $this->assertSame('pipedrive', $lead->fresh()->stage);
+        $this->assertSame('pending', $lead->documents()->value('attach_status'));
+    }
+
+    public function test_process_lead_reuses_person_and_org_from_a_failed_run(): void
+    {
+        config(['services.pipedrive.base_url' => 'https://pd.test/v1', 'services.pipedrive.api_key' => 'k']);
+        Http::fake(['pd.test/v1/deals*' => Http::response(['data' => ['id' => 33]]), '*' => Http::response(['data' => ['id' => 1]])]);
+
+        $ids = app(PipedriveService::class)->processLead(['business_name' => 'Biz'], null, ['person_id' => 7, 'org_id' => 8]);
+
+        $this->assertSame(['person_id' => 7, 'org_id' => 8, 'deal_id' => 33], $ids);
+        Http::assertSentCount(1);
+    }
+
+    public function test_stuck_leads_show_retry_buttons_in_list(): void
+    {
+        $this->actingAs($this->admin());
+
+        $ocr = Lead::create(['email' => 'ocr@b.co', 'phone' => '1234567890', 'status' => 'processing', 'stage' => 'ocr', 'payload' => ['lead_id' => 1]]);
+        $attach = Lead::create(['email' => 'att@b.co', 'phone' => '1234567890', 'status' => 'processing', 'stage' => 'attachments', 'pipedrive_deal_id' => 55, 'payload' => ['lead_id' => 2]]);
+        Lead::whereKey([$ocr->id, $attach->id])->update(['updated_at' => now()->subHour()]);
+
+        $this->get('/admin')->assertSee('Restart processing')->assertSee('Retry failed documents');
+    }
+
+    public function test_killed_attachment_job_fails_the_remaining_documents(): void
+    {
+        $lead = Lead::create(['email' => 'a@b.co', 'phone' => '1234567890', 'status' => 'processing', 'stage' => 'attachments', 'pipedrive_deal_id' => 55, 'payload' => ['lead_id' => 1]]);
+        $lead->documents()->createMany([
+            ['category' => 'ID', 'file_name' => 'ID.pdf', 's3_key' => 'k1', 'attach_status' => 'attached'],
+            ['category' => 'VC', 'file_name' => 'VC.pdf', 's3_key' => 'k2'],
+            ['category' => 'TAX_ID', 'file_name' => 'TAX.pdf', 's3_key' => 'k3'],
+        ]);
+
+        (new \App\Jobs\AttachFileToPipedriveJob(55, ['s3_key' => 'k2'], $lead->id))->failed(new \RuntimeException('timed out'));
+
+        $lead->refresh();
+        $this->assertSame('failed', $lead->status);
+        $this->assertSame(2, $lead->documents()->where('attach_status', 'failed')->count());
+        $this->actingAs($this->admin())->get("/admin/leads/{$lead->id}")->assertSee('Retry failed documents');
     }
 
     public function test_password_update(): void

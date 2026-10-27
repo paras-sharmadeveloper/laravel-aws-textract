@@ -65,6 +65,11 @@ class FinalizeOcrJob implements ShouldQueue
             $this->result['statements'][$idx]['final_filename'] = $this->uniqueFilename($finalName, $usedNames);
         }
 
+        // Kept so a failed Pipedrive sync can be re-run straight from here
+        Lead::track($this->result['lead_id'] ?? null, [
+            'ocr_result' => json_encode($this->result, JSON_INVALID_UTF8_SUBSTITUTE),
+        ]);
+
         // 👉 Next job
         ParseAndCreateLeadJob::dispatch($this->result)->onQueue('Parse-create-lead');
 

@@ -9,7 +9,7 @@ class Lead extends Model
 {
     protected $fillable = [
         'affiliate_id', 'deal_folder', 'owner_name', 'business_name', 'email', 'phone',
-        'locations', 'new_location', 'status', 'stage', 'error', 'payload',
+        'locations', 'new_location', 'status', 'stage', 'error', 'payload', 'ocr_result',
         'pipedrive_person_id', 'pipedrive_org_id', 'pipedrive_deal_id', 'attempts', 'completed_at',
     ];
 
@@ -18,6 +18,7 @@ class Lead extends Model
         return [
             'new_location' => 'boolean',
             'payload' => 'array',
+            'ocr_result' => 'array',
             'completed_at' => 'datetime',
         ];
     }
@@ -73,6 +74,25 @@ class Lead extends Model
         }
     }
 
+    /**
+     * Mark every document still waiting to attach as failed and close out the lead.
+     */
+    public static function failPendingAttachments(?int $leadId, string $error): void
+    {
+        if (!$leadId) {
+            return;
+        }
+
+        try {
+            LeadDocument::where('lead_id', $leadId)->where('attach_status', 'pending')
+                ->update(['attach_status' => 'failed', 'attach_error' => $error]);
+
+            static::find($leadId)?->syncAttachmentStatus();
+        } catch (\Throwable $e) {
+            Log::warning('Lead attachment tracking failed', ['lead_id' => $leadId, 'error' => $e->getMessage()]);
+        }
+    }
+
     public function syncAttachmentStatus(): void
     {
         $documents = $this->documents()->get(['attach_status']);
@@ -109,6 +129,18 @@ class Lead extends Model
 
         // A lead still "processing" long after submission most likely lost its worker
         return $this->status === 'failed' || $this->updated_at->lt(now()->subMinutes(30));
+    }
+
+    /**
+     * What the retry button will do, worded for the admin portal.
+     */
+    public function retryLabel(): string
+    {
+        if ($this->pipedrive_deal_id) {
+            return 'Retry failed documents';
+        }
+
+        return $this->ocr_result ? 'Resync to Pipedrive' : 'Restart processing';
     }
 
     public function pipedriveDealUrl(): ?string

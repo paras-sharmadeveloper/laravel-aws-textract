@@ -5,11 +5,15 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Services\S3Service;
+use App\Models\Affiliate;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class PipedriveService
 {
+    // Deal custom field (person type) holding the affiliate who referred the lead
+    public const AFFILIATE_DEAL_FIELD = 'df1292bf195257a4e8c0177ba69e71e48c864b57';
+
     protected $baseUrl;
     protected $token;
     protected $ownerId;
@@ -50,7 +54,8 @@ class PipedriveService
             } else {
                 $response = match (strtolower($method)) {
                     'post' => $client->post($url, $data),
-                    'get' => $client->get($url, $data),
+                    // Passing $data as the query option would replace the api_token query string
+                    'get' => $client->get($data ? $url . '&' . http_build_query($data) : $url),
                     'put' => $client->put($url, $data),
                     'delete' => $client->delete($url, $data),
                     default => throw new \Exception("Invalid HTTP method: {$method}")
@@ -148,6 +153,46 @@ class PipedriveService
 
     /*
     |--------------------------------------------------------------------------
+    | AFFILIATE (REFERRER) PERSON
+    |--------------------------------------------------------------------------
+    */
+    public function findOrCreateAffiliatePerson(Affiliate $affiliate): ?int
+    {
+        // Match on email when we have one, otherwise on the exact name
+        [$term, $field] = filled($affiliate->email)
+            ? [$affiliate->email, 'email']
+            : [$affiliate->name, 'name'];
+
+        $found = $this->request('get', '/persons/search', [
+            'term' => $term,
+            'fields' => $field,
+            'exact_match' => 'true',
+            'limit' => 1,
+        ]);
+
+        if ($id = $found['items'][0]['item']['id'] ?? null) {
+            return $id;
+        }
+
+        $payload = [
+            'name' => Str::title($affiliate->name),
+            'owner_id' => $this->ownerId,
+            'visible_to' => 3,
+        ];
+
+        if (filled($affiliate->email)) {
+            $payload['email'] = $affiliate->email;
+        }
+
+        if (filled($affiliate->phone)) {
+            $payload['phone'] = $affiliate->phone;
+        }
+
+        return $this->request('post', '/persons', $payload)['id'] ?? null;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | ORGANIZATION
     |--------------------------------------------------------------------------
     */
@@ -176,7 +221,7 @@ class PipedriveService
     | DEAL
     |--------------------------------------------------------------------------
     */
-    public function createDeal(array $data, $personId, $orgId)
+    public function createDeal(array $data, $personId, $orgId, $affiliatePersonId = null)
     {
         $title = ($data['business_name'] ?? $data['email'] ?? 'New Lead');
 
@@ -191,6 +236,11 @@ class PipedriveService
             'visible_to' => 3,
             'currency' => 'USD'
         ];
+
+        if ($affiliatePersonId) {
+            // Affiliate / referred-by person field
+            $payload[self::AFFILIATE_DEAL_FIELD] = $affiliatePersonId;
+        }
 
         return $this->request('post', '/deals', $payload)['id'];
     }
@@ -262,7 +312,8 @@ class PipedriveService
 
         $url = "{$this->baseUrl}/files?api_token={$this->token}";
 
-        $response = Http::attach(
+        // Stay under the job's 120s timeout so a slow upload fails as a normal error
+        $response = Http::timeout(90)->attach(
             'file',
             fopen($uploadPath, 'r'),
             $fileName
@@ -295,11 +346,26 @@ class PipedriveService
     | FULL PIPELINE
     |--------------------------------------------------------------------------
     */
-    public function processLead(array $data)
+    /**
+     * $existing holds ids created by an earlier, partly failed run so a resync
+     * does not duplicate them; $onCreated is told about each new id right away.
+     */
+    public function processLead(array $data, ?Affiliate $affiliate = null, array $existing = [], ?callable $onCreated = null)
     {
-        $personId = $this->createPerson($data);
-        $orgId = $this->createOrganization($data);
-        $dealId = $this->createDeal($data, $personId, $orgId);
+        $onCreated ??= fn() => null;
+
+        if (!$personId = $existing['person_id'] ?? null) {
+            $personId = $this->createPerson($data);
+            $onCreated(['person_id' => $personId]);
+        }
+
+        if (!$orgId = $existing['org_id'] ?? null) {
+            $orgId = $this->createOrganization($data);
+            $onCreated(['org_id' => $orgId]);
+        }
+
+        $affiliatePersonId = $affiliate ? $this->affiliatePersonId($affiliate) : null;
+        $dealId = $this->createDeal($data, $personId, $orgId, $affiliatePersonId);
 
         $uploaded = [];
 
@@ -322,6 +388,24 @@ class PipedriveService
             'org_id' => $orgId,
             'deal_id' => $dealId
         ];
+    }
+
+    /**
+     * The referrer is a nice-to-have on the deal, so a lookup failure is logged
+     * and the deal is still created without it.
+     */
+    private function affiliatePersonId(Affiliate $affiliate): ?int
+    {
+        try {
+            return $this->findOrCreateAffiliatePerson($affiliate);
+        } catch (\Throwable $e) {
+            Log::warning('Pipedrive affiliate person lookup failed', [
+                'affiliate_id' => $affiliate->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private function cleanUtf8($data)

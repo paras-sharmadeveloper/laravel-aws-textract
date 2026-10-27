@@ -82,6 +82,13 @@
                                     @if ($lead->status !== 'completed')
                                         <div class="muted small" style="margin-top: 4px">at {{ $lead->stage }}</div>
                                     @endif
+                                    @if ($lead->canRetry() && auth()->user()->can('leads.retry'))
+                                        <form method="POST" action="{{ route('admin.leads.retry', $lead) }}" style="margin-top: 6px"
+                                            data-confirm="{{ $lead->retryLabel() }} for {{ $lead->business_name ?: $lead->email }}?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm">{{ $lead->retryLabel() }}</button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

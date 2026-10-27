@@ -59,7 +59,7 @@ class AttachFilesToPipedriveJob implements ShouldQueue
             ->dispatch();
     }
 
-    public function failed(\Exception $exception)
+    public function failed(\Throwable $exception)
     {
         Log::critical("AttachFiles Job Failed Completely", [
             'deal_id' => $this->dealId,

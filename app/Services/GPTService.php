@@ -59,6 +59,7 @@ class GPTService
         } catch (\Exception $e) {
 
             Log::error("GPT Error", [
+                'class' => get_class($e),
                 'error' => $e->getMessage()
             ]);
 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\{AttachFilesToPipedriveJob, PrepareUploadsJob, ProcessOcrJob};
+use App\Jobs\{AttachFilesToPipedriveJob, ParseAndCreateLeadJob, PrepareUploadsJob, ProcessOcrJob};
 use App\Models\{Affiliate, Lead, LeadDocument};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -79,6 +79,16 @@ class LeadController extends Controller
             )->onQueue('attachments');
 
             return back()->with('success', "Re-sending {$documents->count()} document(s) to Pipedrive deal #{$lead->pipedrive_deal_id}.");
+        }
+
+        // OCR already done: only send the lead to Pipedrive again
+        if ($lead->ocr_result) {
+            $lead->documents()->update(['attach_status' => 'pending', 'attach_error' => null, 'attached_at' => null]);
+            $lead->update(['status' => 'processing', 'stage' => 'pipedrive', 'error' => null, 'attempts' => $lead->attempts + 1]);
+
+            ParseAndCreateLeadJob::dispatch($lead->ocr_result)->onQueue('Parse-create-lead');
+
+            return back()->with('success', 'Lead re-queued. It will be sent to Pipedrive again.');
         }
 
         // Failed while preparing the browser's uploads: prepare them again

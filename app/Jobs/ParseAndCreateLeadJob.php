@@ -53,6 +53,12 @@ class ParseAndCreateLeadJob implements ShouldQueue
 
         $parsedData = $gpt->parse($gptPayload);
 
+        if (empty($parsedData)) {
+            Log::warning('GPT parse returned no data, falling back to form fields', ['lead_id' => $leadId]);
+        }
+
+        $parsedData = $this->fillFromForm($parsedData);
+
         // Blank voided checks only carry the numbers in the MICR line, which GPT
         // often gives up on; read it directly and fill only what GPT left empty
         $micr = MicrLine::parse($gptPayload['documents']['bank_document']['raw_text'] ?? null);
@@ -103,7 +109,17 @@ class ParseAndCreateLeadJob implements ShouldQueue
 
         $parsedData['files'] = array_merge($filesPayload, $statementFiles);
 
-        $ids = $pipedrive->processLead($parsedData);
+        $lead = $leadId ? Lead::find($leadId) : null;
+
+        $ids = $pipedrive->processLead(
+            $parsedData,
+            $lead?->affiliate,
+            ['person_id' => $lead?->pipedrive_person_id, 'org_id' => $lead?->pipedrive_org_id],
+            fn(array $created) => Lead::track($leadId, array_combine(
+                array_map(fn($key) => "pipedrive_{$key}", array_keys($created)),
+                $created
+            ))
+        );
 
         Lead::track($leadId, [
             'stage' => 'attachments',
@@ -127,6 +143,31 @@ class ParseAndCreateLeadJob implements ShouldQueue
             'stage' => 'pipedrive',
             'error' => 'Lead creation failed: ' . $exception->getMessage(),
         ]);
+    }
+
+    /**
+     * The form fields are always known, so use them for anything GPT could not
+     * extract — otherwise a failed parse creates an empty "New Lead" deal.
+     */
+    private function fillFromForm(array $parsedData): array
+    {
+        [$first, $last] = array_pad(preg_split('/\s+/', trim($this->result['owner_name'] ?? ''), 2), 2, null);
+
+        $fallbacks = [
+            'email' => $this->result['email'] ?? null,
+            'phone' => $this->result['phone'] ?? null,
+            'business_name' => $this->result['business_name'] ?? null,
+            'first_name' => $first ?: null,
+            'last_name' => $last,
+        ];
+
+        foreach ($fallbacks as $field => $value) {
+            if (empty($parsedData[$field]) && filled($value)) {
+                $parsedData[$field] = $value;
+            }
+        }
+
+        return $parsedData;
     }
 
     private function getDocument($name)
