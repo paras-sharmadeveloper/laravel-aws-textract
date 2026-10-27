@@ -16,9 +16,12 @@ class LeadController extends Controller
             return redirect($request->user()->homeUrl());
         }
 
+        $deleted = $request->status === 'deleted';
+
         $leads = Lead::with('affiliate')
             ->withCount('documents')
-            ->when($request->status, fn($q, $status) => $q->where('status', $status))
+            ->when($deleted, fn($q) => $q->onlyTrashed()->latest('deleted_at'))
+            ->when($request->status && !$deleted, fn($q) => $q->where('status', $request->status))
             ->when($request->affiliate, fn($q, $id) => $q->where('affiliate_id', $id))
             ->when($request->q, function ($q, $term) {
                 $q->where(fn($q) => $q
@@ -36,6 +39,7 @@ class LeadController extends Controller
         return view('admin.leads.index', [
             'leads' => $leads,
             'counts' => $counts,
+            'deletedCount' => Lead::onlyTrashed()->count(),
             'affiliates' => Affiliate::orderBy('name')->get(['id', 'name']),
         ]);
     }
@@ -56,6 +60,23 @@ class LeadController extends Controller
         abort_unless($document->lead_id === $lead->id, 404);
 
         return redirect()->away(Storage::disk('s3')->temporaryUrl($document->s3_key, now()->addMinutes(15)));
+    }
+
+    /**
+     * Soft delete: the lead leaves the dashboard but stays in the "Deleted" history.
+     */
+    public function destroy(Lead $lead)
+    {
+        $lead->delete();
+
+        return redirect()->route('admin.leads.index')->with('success', 'Lead "' . ($lead->business_name ?: $lead->email) . '" was deleted. You can restore it from the Deleted tab.');
+    }
+
+    public function restore(Lead $lead)
+    {
+        $lead->restore();
+
+        return redirect()->route('admin.leads.show', $lead)->with('success', 'Lead restored.');
     }
 
     public function retry(Lead $lead)

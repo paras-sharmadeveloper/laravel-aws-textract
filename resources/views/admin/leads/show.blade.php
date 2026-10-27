@@ -18,8 +18,34 @@
             <div class="eyebrow"><a href="{{ route('admin.leads.index') }}">LEADS</a> · #{{ $lead->id }}</div>
             <h1>{{ $lead->business_name ?: 'Untitled lead' }}</h1>
         </div>
-        <span class="badge badge-{{ $lead->status }}" style="font-size: 14px; padding: 6px 14px">{{ ucfirst($lead->status) }}</span>
+        <div class="actions">
+            @if ($lead->trashed())
+                <span class="badge badge-inactive" style="font-size: 14px; padding: 6px 14px">Deleted</span>
+                @can('leads.delete')
+                    <form method="POST" action="{{ route('admin.leads.restore', $lead) }}"
+                        data-confirm="Restore this lead to the dashboard?" data-confirm-title="Restore lead" data-confirm-button="Restore">
+                        @csrf
+                        <button type="submit" class="btn btn-sm">Restore</button>
+                    </form>
+                @endcan
+            @else
+                <span class="badge badge-{{ $lead->status }}" style="font-size: 14px; padding: 6px 14px">{{ ucfirst($lead->status) }}</span>
+                @can('leads.delete')
+                    <form method="POST" action="{{ route('admin.leads.destroy', $lead) }}"
+                        data-confirm="{{ $lead->business_name ?: $lead->email }} will be removed from the dashboard. It stays in the Deleted history and can be restored. Nothing is removed from Pipedrive."
+                        data-confirm-title="Delete this lead?" data-confirm-button="Delete lead" data-confirm-danger>
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                @endcan
+            @endif
+        </div>
     </div>
+
+    @if ($lead->trashed())
+        <div class="alert alert-error" role="status">This lead was deleted on {{ $lead->deleted_at->format('M j, Y g:i A') }}. It is kept here for history only.</div>
+    @endif
 
     <div class="two-col">
         <div>
@@ -96,7 +122,7 @@
                     <div class="error-box" style="margin-top: 18px">{{ $lead->error }}</div>
                 @endif
 
-                @if ($lead->canRetry() && auth()->user()->can('leads.retry'))
+                @if (!$lead->trashed() && $lead->canRetry() && auth()->user()->can('leads.retry'))
                     <form method="POST" action="{{ route('admin.leads.retry', $lead) }}" style="margin-top: 18px"
                         data-confirm="{{ $lead->pipedrive_deal_id ? 'Re-send the documents that did not attach to deal #' . $lead->pipedrive_deal_id . '?' : ($lead->ocr_result ? 'Send this lead to Pipedrive again? A new deal will be created.' : 'Run this lead through OCR and Pipedrive again? A new deal will be created.') }}">
                         @csrf
@@ -105,7 +131,7 @@
                 @endif
 
                 {{-- Retry already covers a failed lead with no deal, so only add this when it does something different --}}
-                @if (!empty($lead->payload) && ($lead->pipedrive_deal_id || !$lead->canRetry()) && auth()->user()->can('leads.retry'))
+                @if (!$lead->trashed() && !empty($lead->payload) && ($lead->pipedrive_deal_id || !$lead->canRetry()) && auth()->user()->can('leads.retry'))
                     <form method="POST" action="{{ route('admin.leads.resync', $lead) }}" style="margin-top: 12px"
                         data-confirm="{{ $lead->pipedrive_deal_id ? 'Send this lead to Pipedrive again as a new deal? Deal #' . $lead->pipedrive_deal_id . ' will stay in Pipedrive.' : 'Send this lead to Pipedrive again?' }}">
                         @csrf

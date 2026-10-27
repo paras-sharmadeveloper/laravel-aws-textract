@@ -15,6 +15,7 @@ class Role extends Model
     public const PERMISSIONS = [
         'leads.view' => 'View leads and their documents',
         'leads.retry' => 'Restart processing of failed leads',
+        'leads.delete' => 'Delete and restore leads',
         'affiliates.manage' => 'Create, edit and delete affiliates',
         'integrations.view' => 'View and test integrations',
         'horizon.view' => 'Open the Horizon queue monitor',

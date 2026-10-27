@@ -26,11 +26,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [Admin\LeadController::class, 'index'])->name('leads.index');
 
         Route::middleware('can:leads.view')->group(function () {
-            Route::get('/leads/{lead}', [Admin\LeadController::class, 'show'])->name('leads.show');
-            Route::get('/leads/{lead}/documents/{document}', [Admin\LeadController::class, 'document'])->name('leads.document');
+            // Deleted leads stay viewable from the "Deleted" history tab
+            Route::get('/leads/{lead}', [Admin\LeadController::class, 'show'])->withTrashed()->name('leads.show');
+            Route::get('/leads/{lead}/documents/{document}', [Admin\LeadController::class, 'document'])->withTrashed()->name('leads.document');
         });
         Route::post('/leads/{lead}/retry', [Admin\LeadController::class, 'retry'])->middleware('can:leads.retry')->name('leads.retry');
         Route::post('/leads/{lead}/resync', [Admin\LeadController::class, 'resync'])->middleware('can:leads.retry')->name('leads.resync');
+
+        Route::middleware('can:leads.delete')->group(function () {
+            Route::delete('/leads/{lead}', [Admin\LeadController::class, 'destroy'])->name('leads.destroy');
+            Route::post('/leads/{lead}/restore', [Admin\LeadController::class, 'restore'])->withTrashed()->name('leads.restore');
+        });
 
         Route::middleware('can:affiliates.manage')->group(function () {
             Route::get('/affiliates', [Admin\AffiliateController::class, 'index'])->name('affiliates.index');

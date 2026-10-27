@@ -493,6 +493,38 @@
             background: var(--red-bg);
         }
 
+        .confirm-box {
+            width: min(420px, calc(100vw - 32px));
+            padding: 26px 26px 22px;
+            border: 1px solid #E6DECB;
+            border-radius: 20px;
+            background: var(--paper);
+            color: var(--ink);
+            box-shadow: 0 24px 60px rgba(18, 30, 24, .25);
+        }
+
+        .confirm-box::backdrop {
+            background: rgba(18, 30, 24, .45);
+        }
+
+        .confirm-box h3 {
+            margin: 0 0 8px;
+            font-size: 18px;
+        }
+
+        .confirm-box p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .confirm-box .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
         .check {
             display: flex;
             align-items: center;
@@ -958,6 +990,17 @@
         </main>
     </div>
 
+    <dialog id="confirmBox" class="confirm-box" aria-labelledby="confirmTitle">
+        <form method="dialog">
+            <h3 id="confirmTitle">Are you sure?</h3>
+            <p id="confirmText"></p>
+            <div class="actions">
+                <button type="submit" value="cancel" class="btn" autofocus>Cancel</button>
+                <button type="submit" value="ok" id="confirmOk" class="btn btn-primary">Confirm</button>
+            </div>
+        </form>
+    </dialog>
+
     <script>
         (function() {
             const btn = document.getElementById('collapseBtn');
@@ -991,11 +1034,40 @@
                 window.location = row.dataset.href;
             }
         });
-        document.querySelectorAll('form[data-confirm]').forEach(function(form) {
-            form.addEventListener('submit', function(e) {
-                if (!confirm(form.dataset.confirm)) e.preventDefault();
+        (function() {
+            const box = document.getElementById('confirmBox');
+            const ok = document.getElementById('confirmOk');
+            let pending = null;
+
+            document.querySelectorAll('form[data-confirm]').forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    if (form.dataset.confirmed) return;
+
+                    // Older browsers without <dialog> fall back to the plain prompt
+                    if (typeof box.showModal !== 'function') {
+                        if (!confirm(form.dataset.confirm)) e.preventDefault();
+                        return;
+                    }
+
+                    e.preventDefault();
+                    pending = form;
+                    document.getElementById('confirmTitle').textContent = form.dataset.confirmTitle || 'Are you sure?';
+                    document.getElementById('confirmText').textContent = form.dataset.confirm;
+                    box.returnValue = '';
+                    ok.textContent = form.dataset.confirmButton || 'Confirm';
+                    ok.className = 'btn ' + ('confirmDanger' in form.dataset ? 'btn-danger' : 'btn-primary');
+                    box.showModal();
+                });
             });
-        });
+
+            box.addEventListener('close', function() {
+                if (box.returnValue === 'ok' && pending) {
+                    pending.dataset.confirmed = '1';
+                    pending.requestSubmit ? pending.requestSubmit() : pending.submit();
+                }
+                pending = null;
+            });
+        })();
     </script>
 </body>
 

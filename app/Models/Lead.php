@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 
 class Lead extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'affiliate_id', 'deal_folder', 'owner_name', 'business_name', 'email', 'phone',
         'locations', 'new_location', 'status', 'stage', 'error', 'payload', 'ocr_result',

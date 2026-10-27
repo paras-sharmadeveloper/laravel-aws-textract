@@ -16,7 +16,9 @@
             'completed' => ['Sent to Pipedrive', $counts['completed'] ?? 0],
             'processing' => ['Processing', $counts['processing'] ?? 0],
             'failed' => ['Needs attention', $counts['failed'] ?? 0],
+            'deleted' => ['Deleted', $deletedCount],
         ];
+        $showingDeleted = request('status') === 'deleted';
     @endphp
 
     <div class="stats">
@@ -58,6 +60,9 @@
                             <th>Affiliate</th>
                             <th>Docs</th>
                             <th>Status</th>
+                            @can('leads.delete')
+                                <th></th>
+                            @endcan
                         </tr>
                     </thead>
                     <tbody>
@@ -78,6 +83,10 @@
                                 <td>{{ $lead->affiliate?->name ?? '—' }}</td>
                                 <td>{{ $lead->documents_count }}</td>
                                 <td>
+                                    @if ($showingDeleted)
+                                        <span class="badge badge-inactive">Deleted</span>
+                                        <div class="muted small" style="margin-top: 4px">{{ $lead->deleted_at->format('M j, Y') }}</div>
+                                    @else
                                     <span class="badge badge-{{ $lead->status }}">{{ ucfirst($lead->status) }}</span>
                                     @if ($lead->status !== 'completed')
                                         <div class="muted small" style="margin-top: 4px">at {{ $lead->stage }}</div>
@@ -95,7 +104,28 @@
                                             <button type="submit" class="btn btn-sm">Resync to Pipedrive</button>
                                         </form>
                                     @endif
+                                    @endif
                                 </td>
+                                @can('leads.delete')
+                                    <td class="nowrap">
+                                        @if ($showingDeleted)
+                                            <form method="POST" action="{{ route('admin.leads.restore', $lead) }}"
+                                                data-confirm="Restore {{ $lead->business_name ?: $lead->email }} to the dashboard?"
+                                                data-confirm-title="Restore lead" data-confirm-button="Restore">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm">Restore</button>
+                                            </form>
+                                        @else
+                                            <form method="POST" action="{{ route('admin.leads.destroy', $lead) }}"
+                                                data-confirm="{{ $lead->business_name ?: $lead->email }} will be removed from the dashboard. It stays in the Deleted history and can be restored. Nothing is removed from Pipedrive."
+                                                data-confirm-title="Delete this lead?" data-confirm-button="Delete lead" data-confirm-danger>
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                            </form>
+                                        @endif
+                                    </td>
+                                @endcan
                             </tr>
                         @endforeach
                     </tbody>

@@ -276,6 +276,38 @@ class AffiliateLeadAdminTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    public function test_leads_are_soft_deleted_and_can_be_restored(): void
+    {
+        $this->actingAs($this->admin());
+
+        $lead = Lead::create(['email' => 'gone@b.co', 'phone' => '1234567890', 'business_name' => 'Gone Biz', 'status' => 'completed', 'stage' => 'done', 'payload' => ['lead_id' => 1]]);
+
+        $this->get('/admin')->assertSee('Delete this lead?');
+
+        $this->delete("/admin/leads/{$lead->id}")->assertRedirect('/admin');
+        $this->assertSoftDeleted($lead);
+
+        $this->get('/admin')->assertDontSee('gone@b.co');
+        $this->get('/admin?status=deleted')->assertOk()->assertSee('gone@b.co')->assertSee('Restore');
+        $this->get("/admin/leads/{$lead->id}")->assertOk()->assertSee('kept here for history');
+        $this->post("/admin/leads/{$lead->id}/retry")->assertNotFound();
+
+        $this->post("/admin/leads/{$lead->id}/restore")->assertRedirect("/admin/leads/{$lead->id}");
+        $this->assertNotSoftDeleted($lead);
+    }
+
+    public function test_deleting_leads_needs_permission(): void
+    {
+        $role = Role::create(['name' => 'Viewer', 'permissions' => ['leads.view']]);
+        $user = User::factory()->create(['role_id' => $role->id]);
+        $lead = Lead::create(['email' => 'a@b.co', 'phone' => '1234567890', 'status' => 'completed', 'payload' => ['lead_id' => 1]]);
+
+        $this->actingAs($user);
+        $this->get('/admin')->assertDontSee('Delete this lead?');
+        $this->delete("/admin/leads/{$lead->id}")->assertForbidden();
+        $this->assertNotSoftDeleted($lead);
+    }
+
     public function test_password_update(): void
     {
         $this->actingAs($this->admin())
