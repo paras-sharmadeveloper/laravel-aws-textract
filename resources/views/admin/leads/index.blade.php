@@ -88,6 +88,12 @@
                                             @csrf
                                             <button type="submit" class="btn btn-sm">{{ $lead->retryLabel() }}</button>
                                         </form>
+                                    @elseif (!empty($lead->payload) && auth()->user()->can('leads.retry'))
+                                        <form method="POST" action="{{ route('admin.leads.resync', $lead) }}" style="margin-top: 6px"
+                                            data-confirm="Send {{ $lead->business_name ?: $lead->email }} to Pipedrive again as a new deal?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm">Resync to Pipedrive</button>
+                                        </form>
                                     @endif
                                 </td>
                             </tr>

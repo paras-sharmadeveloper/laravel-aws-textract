@@ -244,6 +244,38 @@ class AffiliateLeadAdminTest extends TestCase
         $this->actingAs($this->admin())->get("/admin/leads/{$lead->id}")->assertSee('Retry failed documents');
     }
 
+    public function test_completed_lead_can_be_resynced_as_a_new_deal(): void
+    {
+        Queue::fake();
+        $this->actingAs($this->admin());
+
+        $lead = Lead::create(['email' => 'a@b.co', 'phone' => '1234567890', 'business_name' => 'Biz', 'status' => 'completed', 'stage' => 'done', 'pipedrive_person_id' => 5, 'pipedrive_org_id' => 6, 'pipedrive_deal_id' => 7, 'payload' => ['lead_id' => 1], 'ocr_result' => ['lead_id' => 1, 'documents' => []]]);
+        $lead->documents()->create(['category' => 'ID', 'file_name' => 'ID.pdf', 's3_key' => 'k1', 'attach_status' => 'attached']);
+
+        $this->get('/admin')->assertSee('Resync to Pipedrive');
+        $this->get("/admin/leads/{$lead->id}")->assertSee('Resync to Pipedrive');
+
+        $this->post("/admin/leads/{$lead->id}/resync")->assertSessionHas('success');
+        Queue::assertPushed(ParseAndCreateLeadJob::class);
+
+        $lead->refresh();
+        $this->assertNull($lead->pipedrive_deal_id);
+        $this->assertNull($lead->pipedrive_person_id);
+        $this->assertSame('processing', $lead->status);
+        $this->assertSame('pending', $lead->documents()->value('attach_status'));
+    }
+
+    public function test_resync_is_refused_while_lead_is_still_processing(): void
+    {
+        Queue::fake();
+        $this->actingAs($this->admin());
+
+        $lead = Lead::create(['email' => 'a@b.co', 'phone' => '1234567890', 'status' => 'processing', 'stage' => 'ocr', 'payload' => ['lead_id' => 1]]);
+
+        $this->post("/admin/leads/{$lead->id}/resync")->assertSessionHas('error');
+        Queue::assertNothingPushed();
+    }
+
     public function test_password_update(): void
     {
         $this->actingAs($this->admin())

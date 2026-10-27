@@ -30,6 +30,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/leads/{lead}/documents/{document}', [Admin\LeadController::class, 'document'])->name('leads.document');
         });
         Route::post('/leads/{lead}/retry', [Admin\LeadController::class, 'retry'])->middleware('can:leads.retry')->name('leads.retry');
+        Route::post('/leads/{lead}/resync', [Admin\LeadController::class, 'resync'])->middleware('can:leads.retry')->name('leads.resync');
 
         Route::middleware('can:affiliates.manage')->group(function () {
             Route::get('/affiliates', [Admin\AffiliateController::class, 'index'])->name('affiliates.index');

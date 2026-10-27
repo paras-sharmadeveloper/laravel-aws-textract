@@ -81,6 +81,41 @@ class LeadController extends Controller
             return back()->with('success', "Re-sending {$documents->count()} document(s) to Pipedrive deal #{$lead->pipedrive_deal_id}.");
         }
 
+        return $this->restart($lead);
+    }
+
+    /**
+     * Send the lead to Pipedrive again as a brand-new deal, whatever its status —
+     * for leads marked completed whose deal reached Pipedrive empty or wrong.
+     */
+    public function resync(Lead $lead)
+    {
+        if (empty($lead->payload)) {
+            return back()->with('error', 'This lead has no stored documents to resync.');
+        }
+
+        if ($lead->status === 'processing' && !$lead->canRetry()) {
+            return back()->with('error', 'This lead is still being processed. Try again in a few minutes.');
+        }
+
+        $oldDeal = $lead->pipedrive_deal_id;
+
+        // Fresh person / org / deal, so nothing from the bad sync is reused
+        $lead->update(['pipedrive_person_id' => null, 'pipedrive_org_id' => null, 'pipedrive_deal_id' => null]);
+
+        $response = $this->restart($lead);
+
+        return $oldDeal
+            ? $response->with('success', "Lead re-queued for Pipedrive. A new deal will be created; the old deal #{$oldDeal} is left in Pipedrive for you to delete.")
+            : $response;
+    }
+
+    /**
+     * Run a lead with no Pipedrive deal through the pipeline again from the
+     * furthest point its stored data allows.
+     */
+    private function restart(Lead $lead)
+    {
         // OCR already done: only send the lead to Pipedrive again
         if ($lead->ocr_result) {
             $lead->documents()->update(['attach_status' => 'pending', 'attach_error' => null, 'attached_at' => null]);

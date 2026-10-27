@@ -102,7 +102,18 @@
                         @csrf
                         <button type="submit" class="btn btn-gold">{{ $lead->retryLabel() }}</button>
                     </form>
-                @elseif ($lead->status === 'failed' && empty($lead->payload))
+                @endif
+
+                {{-- Retry already covers a failed lead with no deal, so only add this when it does something different --}}
+                @if (!empty($lead->payload) && ($lead->pipedrive_deal_id || !$lead->canRetry()) && auth()->user()->can('leads.retry'))
+                    <form method="POST" action="{{ route('admin.leads.resync', $lead) }}" style="margin-top: 12px"
+                        data-confirm="{{ $lead->pipedrive_deal_id ? 'Send this lead to Pipedrive again as a new deal? Deal #' . $lead->pipedrive_deal_id . ' will stay in Pipedrive.' : 'Send this lead to Pipedrive again?' }}">
+                        @csrf
+                        <button type="submit" class="btn">Resync to Pipedrive</button>
+                    </form>
+                @endif
+
+                @if ($lead->status === 'failed' && empty($lead->payload))
                     <p class="muted small" style="margin: 18px 0 0">The upload itself failed, so there is nothing stored to retry. The merchant needs to resubmit.</p>
                 @endif
             </div>
