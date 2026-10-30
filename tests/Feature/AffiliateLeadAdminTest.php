@@ -500,6 +500,13 @@ class AffiliateLeadAdminTest extends TestCase
             ->assertSessionHasErrors('apply_to_all');
     }
 
+    private function assertButton(string $slug, string $href, string $class, string $label = ''): void
+    {
+        $html = preg_replace('/\s+/', ' ', $this->get("/affiliate/{$slug}")->getContent());
+
+        $this->assertStringContainsString("href=\"{$href}\" class=\"{$class}\">{$label}", $html);
+    }
+
     public function test_buttons_default_to_the_portal_and_can_use_a_custom_link(): void
     {
         $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
@@ -512,21 +519,20 @@ class AffiliateLeadAdminTest extends TestCase
             ->assertSessionHasNoErrors();
 
         // Only the chosen button moves; the others still lead to her portal
-        $this->get('/affiliate/janedoe')
-            ->assertSee('href="' . $custom . '" class="btn btn-gold"', false)
-            ->assertSee('href="' . url('janedoe') . '" class="btn btn-nav"', false);
+        $this->assertButton('janedoe', $custom, 'btn btn-gold');
+        $this->assertButton('janedoe', url('janedoe'), 'btn btn-nav');
 
         // An all-affiliates portal link still goes to each affiliate's own portal
         $this->put("/admin/affiliates/{$jane->id}/landing", ['apply_to_all' => 'Hero', 'content' => ['hero_button_link' => 'portal', 'hero_button' => 'Apply today']]);
-        $this->get('/affiliate/janedoe')->assertSee('href="' . url('janedoe') . '" class="btn btn-gold">Apply today', false);
-        $this->get('/affiliate/samlee')->assertSee('href="' . url('samlee') . '" class="btn btn-gold">Apply today', false);
+        $this->assertButton('janedoe', url('janedoe'), 'btn btn-gold', 'Apply today');
+        $this->assertButton('samlee', url('samlee'), 'btn btn-gold', 'Apply today');
 
         // A custom link applied to all can still be switched back for one affiliate
         $this->put("/admin/affiliates/{$jane->id}/landing", ['apply_to_all' => 'Hero', 'content' => ['hero_button_link' => 'custom', 'hero_button_url' => $custom]]);
-        $this->get('/affiliate/samlee')->assertSee('href="' . $custom . '" class="btn btn-gold"', false);
+        $this->assertButton('samlee', $custom, 'btn btn-gold');
 
         $this->put("/admin/affiliates/{$sam->id}/landing", ['content' => ['hero_button_link' => 'portal', 'hero_button_url' => $custom]]);
-        $this->get('/affiliate/samlee')->assertSee('href="' . url('samlee') . '" class="btn btn-gold"', false);
+        $this->assertButton('samlee', url('samlee'), 'btn btn-gold');
     }
 
     public function test_custom_button_links_must_be_web_links(): void

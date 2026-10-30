@@ -1,0 +1,41 @@
+:root {
+    --cream: #F4EEE0;
+    --paper: #FBF8EE;
+    --field: #FFFDF7;
+    --tile: #F7F1E3;
+    --forest: #121E18;
+    --forest-2: #1C2922;
+    --forest-line: #34443A;
+    --ink: #151A16;
+    --ink-2: #3F4640;
+    --muted: #535A52;
+    --line: #E2D9C4;
+    --line-2: #D8CFBA;
+    --dash: #CFC3A6;
+    --sand: #E8E0CC;
+    --gold: #BFA15A;
+    --gold-2: #C9AD62;
+    --gold-ink: #8F7431;
+    --gold-num: #A88A3F;
+    --req: #A2621E;
+    --navy: #1E2A44;
+    --serif: 'Cormorant Garamond', Garamond, Georgia, serif;
+    --sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --on-dark: #E9E4D6;
+    --on-dark-2: #B5B5A6;
+    --green: #3D6B47;
+    --green-bg: #E5EEDD;
+    --red: #9A3D12;
+    --red-bg: #F6E3D6;
+    --amber: #7A6128;
+    --amber-bg: #F3EAD0;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}

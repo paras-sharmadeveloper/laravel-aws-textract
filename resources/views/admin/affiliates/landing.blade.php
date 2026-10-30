@@ -26,7 +26,7 @@
         <input type="hidden" name="apply_to_all" id="applyToAll">
 
         <div class="card">
-            <p class="muted" style="margin: 0">Save landing page only changes {{ $affiliate->name }}'s page. Apply to
+            <p class="muted landing-intro">Save landing page only changes {{ $affiliate->name }}'s page. Apply to
                 all affiliates puts a section on everyone's page, including new affiliates. Clear a field to go back to
                 the default. Wrap words in *stars* in the headline, intro, apply heading or checklist
                 to highlight them.</p>
@@ -34,8 +34,8 @@
 
         @foreach ($sections as $section => $fields)
             <div class="card">
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px">
-                    <h2 style="margin: 0">{{ $section }}</h2>
+                <div class="landing-section-head">
+                    <h2>{{ $section }}</h2>
                     <button type="button" class="btn btn-sm" data-apply-all="{{ $section }}">Apply to all affiliates</button>
                 </div>
                 <div class="form-grid">
@@ -47,7 +47,7 @@
                             $videoMode = ['video_url' => 'link', 'video_poster' => 'link', 'video_embed' => 'embed'][$key] ?? null;
                             $isButtonLink = str_ends_with($key, '_button_link');
                         @endphp
-                        <div class="field" @if ($wide) style="grid-column: 1 / -1" @endif
+                        <div @class(['field', 'field-wide' => $wide])
                             @if ($videoMode) data-video-mode="{{ $videoMode }}" @endif
                             @if (str_ends_with($key, '_button_url')) data-custom-link-for="{{ str_replace('_url', '_link', $key) }}" @endif>
                             @if ($key === 'video_use_embed')
@@ -68,8 +68,7 @@
                                 </select>
                                 <span class="help">The submit portal link is each affiliate's own application page.</span>
                             @elseif ($long)
-                                <textarea id="{{ $key }}" name="content[{{ $key }}]" class="input" rows="3"
-                                    style="height: auto; padding-top: 10px; padding-bottom: 10px; resize: vertical; font: inherit">{{ $value }}</textarea>
+                                <textarea id="{{ $key }}" name="content[{{ $key }}]" class="input input-area" rows="3">{{ $value }}</textarea>
                             @else
                                 <input id="{{ $key }}" name="content[{{ $key }}]" class="input"
                                     value="{{ $value }}">
@@ -95,7 +94,7 @@
             </div>
         @endforeach
 
-        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px">
+        <div class="landing-actions">
             <a href="{{ route('admin.affiliates.index') }}" class="btn">Cancel</a>
             <button type="submit" class="btn btn-primary" id="saveLanding">Save landing page</button>
         </div>
