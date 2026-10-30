@@ -4,8 +4,9 @@ namespace App\Support;
 
 /**
  * Works out how to play what an admin pasted as a landing page video: a share link
- * from a video platform, an embed code, or a direct link to a video file. Only the
- * resolved link is ever rendered, never the pasted HTML.
+ * from a video platform, an embed code, or a direct link to a video file. Script
+ * embeds from other platforms only ever run inside the sandboxed frame from
+ * document(), never on the page itself.
  */
 class LandingVideo
 {
@@ -27,7 +28,7 @@ class LandingVideo
         '#^rumble\.com/embed/(\w+)#' => 'https://rumble.com/embed/$1/',
     ];
 
-    /** @return array{type: 'file'|'embed', src: string}|null */
+    /** @return array{type: 'file'|'embed', src: string}|array{type: 'code', html: string}|null */
     public static function parse(?string $input): ?array
     {
         $input = trim((string) $input);
@@ -40,7 +41,7 @@ class LandingVideo
             return self::fromUrl($input);
         }
 
-        // Embed code: an iframe from any https site is allowed, a script only if it names a known platform
+        // Embed code: an iframe from any https site, or a script that loads its player from the web
         if (preg_match('/<iframe\b[^>]*\bsrc\s*=\s*["\']?([^"\'\s>]+)/i', $input, $iframe)) {
             return self::fromUrl($iframe[1], true);
         }
@@ -53,7 +54,15 @@ class LandingVideo
             }
         }
 
-        return null;
+        return $urls[0] && stripos($input, '<script') !== false ? ['type' => 'code', 'html' => $input] : null;
+    }
+
+    /** Standalone page for the sandboxed frame that runs a script embed. */
+    public static function document(string $code): string
+    {
+        return '<!DOCTYPE html><html><head><meta charset="utf-8">'
+            . '<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style>'
+            . "</head><body>{$code}</body></html>";
     }
 
     private static function fromUrl(string $url, bool $fromIframe = false): ?array

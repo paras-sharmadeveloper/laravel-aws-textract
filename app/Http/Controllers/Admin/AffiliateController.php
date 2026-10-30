@@ -64,11 +64,21 @@ class AffiliateController extends Controller
 
     public function updateLanding(Request $request, Affiliate $affiliate)
     {
-        $data = $request->validate(LandingContent::rules((array) $request->input('content')));
+        $data = $request->validate(LandingContent::rules((array) $request->input('content')) + [
+            'apply_to_all' => ['nullable', Rule::in(array_keys(LandingContent::SECTIONS))],
+        ]);
+        $content = $data['content'] ?? [];
+        $section = $data['apply_to_all'] ?? null;
 
-        $affiliate->update(['landing_content' => LandingContent::overrides($data['content'] ?? [])]);
+        if ($section) {
+            LandingContent::applyToAll($section, $content);
+        }
 
-        return back()->with('success', "{$affiliate->name}'s landing page is updated.");
+        $affiliate->update(['landing_content' => LandingContent::overrides($content)]);
+
+        return back()->with('success', $section
+            ? "The {$section} section is now live on every affiliate's page."
+            : "{$affiliate->name}'s landing page is updated.");
     }
 
     public function resetLanding(Affiliate $affiliate)

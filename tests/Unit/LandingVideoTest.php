@@ -52,6 +52,14 @@ class LandingVideoTest extends TestCase
         );
     }
 
+    public function test_script_embeds_from_other_platforms_are_kept_as_code(): void
+    {
+        $code = '<div id="player"></div><script>load("https://fast.vidalytics.com/embeds/abc/def/");</script>';
+
+        $this->assertSame(['type' => 'code', 'html' => $code], LandingVideo::parse($code));
+        $this->assertStringContainsString($code, LandingVideo::document($code));
+    }
+
     public function test_anything_else_is_rejected(): void
     {
         foreach ([null, '', 'not a video', 'https://example.com/about', 'javascript:alert(1)', '<iframe src="javascript:alert(1)"></iframe>', '<iframe src="http://insecure.example.com/x"></iframe>', '<script>alert(1)</script>'] as $input) {

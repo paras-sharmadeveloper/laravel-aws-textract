@@ -1,4 +1,5 @@
 @use('App\Support\LandingContent')
+@use('App\Support\LandingVideo')
 <!DOCTYPE html>
 <html lang="en">
 
@@ -262,6 +263,25 @@
             padding-top: 44px;
             border-top: 1px solid var(--forest-line);
             text-align: left;
+        }
+
+        .stats.will-animate .stat {
+            opacity: 0;
+            transform: translateY(16px);
+        }
+
+        .stats.animated .stat {
+            opacity: 1;
+            transform: none;
+            transition: opacity .7s ease, transform .7s ease;
+        }
+
+        .stats.animated .stat:nth-child(2) {
+            transition-delay: .15s;
+        }
+
+        .stats.animated .stat:nth-child(3) {
+            transition-delay: .3s;
         }
 
         .stat strong {
@@ -580,6 +600,32 @@
             color: var(--ink-2);
         }
 
+        .step,
+        .benefit,
+        .tiers,
+        .qualify>div,
+        .ready {
+            transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+        }
+
+        @media (hover: hover) {
+
+            .step:hover,
+            .benefit:hover,
+            .tiers:hover,
+            .qualify>div:hover {
+                transform: translateY(-4px);
+                border-color: var(--gold);
+                box-shadow: 0 14px 30px rgba(18, 30, 24, .1);
+            }
+
+            .ready:hover {
+                transform: translateY(-4px);
+                border-color: var(--gold);
+                box-shadow: 0 14px 30px rgba(0, 0, 0, .3);
+            }
+        }
+
         .site-footer {
             padding: 56px 0 40px;
             background: var(--cream);
@@ -749,11 +795,21 @@
                 scroll-behavior: auto;
             }
 
-            .btn {
+            .btn,
+            .step,
+            .benefit,
+            .tiers,
+            .qualify>div,
+            .ready {
                 transition: none;
             }
 
-            .btn:hover {
+            .btn:hover,
+            .step:hover,
+            .benefit:hover,
+            .tiers:hover,
+            .qualify>div:hover,
+            .ready:hover {
                 transform: none;
             }
         }
@@ -763,8 +819,6 @@
 <body>
 
     @php
-        // Every call to action goes to this affiliate's own application so the lead is credited to them
-        $applyUrl = $affiliate->link();
         $c = $affiliate->landingContent();
         $video = LandingContent::video($c);
         $videoPoster = $c['video_poster'] ?: config('services.landing.video_poster');
@@ -782,7 +836,7 @@
                 <a href="#funding">{{ $c['nav_funding'] }}</a>
                 <a href="#faq">{{ $c['nav_faq'] }}</a>
             </nav>
-            <a href="{{ $applyUrl }}" class="btn btn-nav">{{ $c['nav_button'] }}</a>
+            <a href="{{ LandingContent::buttonUrl($c, 'nav_button', $affiliate->link()) }}" class="btn btn-nav">{{ $c['nav_button'] }}</a>
         </div>
     </header>
 
@@ -793,7 +847,12 @@
             <p class="hero-sub">{{ LandingContent::highlight($c['hero_text'], 'strong') }}</p>
 
             <div class="video">
-                @if ($video && $video['type'] === 'embed')
+                @if ($video && $video['type'] === 'code')
+                    {{-- No allow-same-origin: pasted scripts can't reach this page or its visitors' cookies --}}
+                    <iframe srcdoc="{{ LandingVideo::document($video['html']) }}" title="DPS Payments video"
+                        sandbox="allow-scripts allow-presentation allow-popups allow-popups-to-escape-sandbox"
+                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                @elseif ($video && $video['type'] === 'embed')
                     <iframe src="{{ $video['src'] }}" title="DPS Payments video" loading="lazy"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
@@ -813,10 +872,10 @@
             </div>
 
             <div class="hero-cta">
-                <a href="{{ $applyUrl }}" class="btn btn-gold">{{ $c['hero_button'] }}</a>
+                <a href="{{ LandingContent::buttonUrl($c, 'hero_button', $affiliate->link()) }}" class="btn btn-gold">{{ $c['hero_button'] }}</a>
             </div>
 
-            <div class="stats">
+            <div class="stats" id="stats">
                 @foreach (range(1, 3) as $i)
                     <div class="stat"><strong>{{ $c["stat_{$i}_value"] }}</strong><span>{{ $c["stat_{$i}_label"] }}</span></div>
                 @endforeach
@@ -891,7 +950,7 @@
                     <div class="eyebrow">{{ $c['apply_eyebrow'] }}</div>
                     <h2>{{ LandingContent::highlight($c['apply_title']) }}</h2>
                     <p>{{ $c['apply_text'] }}</p>
-                    <a href="{{ $applyUrl }}" class="btn btn-gold">{{ $c['apply_button'] }}</a>
+                    <a href="{{ LandingContent::buttonUrl($c, 'apply_button', $affiliate->link()) }}" class="btn btn-gold">{{ $c['apply_button'] }}</a>
                     <div class="apply-secure">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -949,6 +1008,71 @@
             <div class="copy">© {{ date('Y') }} DPS Payments. All rights reserved.</div>
         </div>
     </footer>
+
+    <script>
+        // Stats count up the first time they scroll into view. The real values are in the
+        // page, so without JavaScript or with reduced motion they simply show as they are.
+        (function() {
+            const stats = document.getElementById('stats');
+            const DURATION = 1600;
+
+            if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                return;
+            }
+
+            function countUp(el, delay) {
+                const text = el.textContent;
+                const match = text.match(/\d[\d,]*(?:\.\d+)?/);
+
+                if (!match) {
+                    return;
+                }
+
+                const target = parseFloat(match[0].replace(/,/g, ''));
+                const decimals = (match[0].split('.')[1] || '').length;
+                const format = new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: decimals,
+                    maximumFractionDigits: decimals,
+                    useGrouping: match[0].includes(','),
+                });
+                const render = function(value) {
+                    el.textContent = text.slice(0, match.index) + format.format(value) + text.slice(match.index + match[0].length);
+                };
+                let start = null;
+
+                function frame(now) {
+                    start = start ?? now + delay;
+                    const progress = Math.min(Math.max(now - start, 0) / DURATION, 1);
+
+                    if (progress < 1) {
+                        render(target * (1 - Math.pow(1 - progress, 3)));
+                        requestAnimationFrame(frame);
+                    } else {
+                        el.textContent = text;
+                    }
+                }
+
+                render(0);
+                requestAnimationFrame(frame);
+            }
+
+            stats.classList.add('will-animate');
+
+            new IntersectionObserver(function(entries, observer) {
+                if (!entries[0].isIntersecting) {
+                    return;
+                }
+
+                observer.disconnect();
+                stats.classList.add('animated');
+                stats.querySelectorAll('strong').forEach(function(el, i) {
+                    countUp(el, i * 150);
+                });
+            }, {
+                threshold: 0.3
+            }).observe(stats);
+        })();
+    </script>
 
 </body>
 

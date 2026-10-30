@@ -2,11 +2,16 @@
 
 namespace App\Support;
 
+use App\Models\Affiliate;
+use App\Models\LandingDefault;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 
 /**
- * Editable text of the affiliate landing page. An affiliate only stores the values
- * that differ from these defaults, so anything they never changed follows the defaults.
+ * Editable text of the affiliate landing page. The defaults below can be replaced
+ * for everyone with "Apply to all affiliates", and an affiliate only stores the values
+ * that differ from those, so anything they never changed follows the defaults.
  */
 class LandingContent
 {
@@ -18,15 +23,19 @@ class LandingContent
             'nav_funding' => ['Link 3', 'Funding'],
             'nav_faq' => ['Link 4', 'FAQ'],
             'nav_button' => ['Button', 'Apply now →'],
+            'nav_button_link' => ['Button link', 'portal'],
+            'nav_button_url' => ['Custom link', ''],
         ],
         'Hero' => [
             'hero_eyebrow' => ['Small heading', 'GROWTH CAPITAL FOR RESTAURANTS AND BARS'],
             'hero_title' => ['Headline', 'Get *up to $1.5 million+* in cash for your restaurant or bar.'],
             'hero_text' => ['Intro text', 'Funding comes in *two rounds*: an initial round when you go live, and you can qualify for more within 90 days. You pay it back in food and drinks, not cash.'],
             'hero_button' => ['Button', 'Apply in 5 minutes →'],
+            'hero_button_link' => ['Button link', 'portal'],
+            'hero_button_url' => ['Custom link', ''],
         ],
         'Video' => [
-            'video_use_embed' => ['Use embed code', ''],
+            'video_use_embed' => ['Use embed code', '0'],
             'video_url' => ['Video link', ''],
             'video_embed' => ['Embed code', ''],
             'video_poster' => ['Thumbnail image link', ''],
@@ -89,6 +98,8 @@ class LandingContent
             'apply_title' => ['Heading', "See your number\nin 1–2 *business days.*"],
             'apply_text' => ['Text', "Upload a few documents through our secure application. No cost, no obligation, and you'll hear from us the same day."],
             'apply_button' => ['Button', 'Start your application →'],
+            'apply_button_link' => ['Button link', 'portal'],
+            'apply_button_url' => ['Custom link', ''],
             'apply_secure' => ['Text under button', 'Opens our secure application'],
             'ready_title' => ['Checklist heading', 'HAVE THESE READY'],
             'ready_1' => ['Checklist item 1', "Driver's license or passport"],
@@ -121,9 +132,20 @@ class LandingContent
         ],
     ];
 
-    public static function defaults(): array
+    /** Call-to-action buttons, which each have a "_link" choice and a custom "_url" field */
+    public const BUTTONS = ['nav_button', 'hero_button', 'apply_button'];
+
+    public static function builtInDefaults(): array
     {
         return array_map(fn($field) => $field[1], array_merge(...array_values(self::SECTIONS)));
+    }
+
+    /** The built-in text with everything applied to all affiliates on top. */
+    public static function defaults(): array
+    {
+        $defaults = self::builtInDefaults();
+
+        return array_merge($defaults, array_intersect_key(LandingDefault::pluck('value', 'key')->all(), $defaults));
     }
 
     /** Full page text: the affiliate's own values on top of the defaults. */
@@ -140,7 +162,7 @@ class LandingContent
         $overrides = [];
 
         foreach (self::defaults() as $key => $default) {
-            $value = trim(str_replace("\r\n", "\n", (string) ($input[$key] ?? '')));
+            $value = self::clean($input[$key] ?? '');
 
             if ($value !== '' && $value !== $default) {
                 $overrides[$key] = $value;
@@ -150,33 +172,78 @@ class LandingContent
         return $overrides;
     }
 
+    /**
+     * Makes one section's values the default for every affiliate, replacing what
+     * each affiliate customized there. A blank field goes back to the built-in text.
+     */
+    public static function applyToAll(string $section, array $input): void
+    {
+        $keys = array_keys(self::SECTIONS[$section]);
+        $builtIn = self::builtInDefaults();
+
+        DB::transaction(function () use ($keys, $builtIn, $input) {
+            foreach ($keys as $key) {
+                $value = self::clean($input[$key] ?? '');
+
+                if ($value === '' || $value === $builtIn[$key]) {
+                    LandingDefault::where('key', $key)->delete();
+                } else {
+                    LandingDefault::updateOrCreate(['key' => $key], ['value' => $value]);
+                }
+            }
+
+            Affiliate::whereNotNull('landing_content')->each(function (Affiliate $affiliate) use ($keys) {
+                $affiliate->update(['landing_content' => Arr::except($affiliate->landing_content, $keys)]);
+            });
+        });
+    }
+
+    private static function clean(mixed $value): string
+    {
+        return trim(str_replace("\r\n", "\n", (string) $value));
+    }
+
     public static function rules(array $input = []): array
     {
         $rules = [];
 
-        foreach (array_keys(self::defaults()) as $key) {
+        foreach (array_keys(self::builtInDefaults()) as $key) {
             $rules["content.{$key}"] = 'nullable|string|max:2000';
         }
 
         $rules['content.video_poster'] = 'nullable|url:http,https|max:2000';
-        $rules['content.video_use_embed'] = 'nullable|in:1';
+
+        foreach (self::BUTTONS as $button) {
+            $custom = ($input["{$button}_link"] ?? '') === 'custom';
+
+            $rules["content.{$button}_link"] = 'nullable|in:portal,custom';
+            $rules["content.{$button}_url"] = $custom ? 'required|url:http,https|max:2000' : 'nullable|string|max:2000';
+        }
+
+        $rules['content.video_use_embed'] = 'nullable|in:0,1';
 
         // Only the source in use is checked; the other one is kept for switching back
         $useEmbed = !empty($input['video_use_embed']);
         $playable = function ($attribute, $value, $fail) use ($useEmbed) {
             if (!LandingVideo::parse($value)) {
                 $fail($useEmbed
-                    ? "We can't play this embed code. Paste the full iframe code from the video platform."
+                    ? "We can't play this embed code. Paste the full code from the video platform's Share or Embed option."
                     : "We can't play this video. Paste a link from YouTube, Vimeo, Wistia, Loom or a similar platform, or a direct link to a video file such as an MP4.");
             }
         };
 
         $rules['content.video_url'] = ['nullable', 'string', 'max:5000', ...($useEmbed ? [] : [$playable])];
         $rules['content.video_embed'] = $useEmbed
-            ? ['required', 'string', 'max:5000', $playable]
-            : ['nullable', 'string', 'max:5000'];
+            ? ['required', 'string', 'max:20000', $playable]
+            : ['nullable', 'string', 'max:20000'];
 
         return $rules;
+    }
+
+    /** Where a button goes: the affiliate's submit portal unless a custom link was chosen. */
+    public static function buttonUrl(array $content, string $button, string $portalUrl): string
+    {
+        return $content["{$button}_link"] === 'custom' ? $content["{$button}_url"] : $portalUrl;
     }
 
     /** The video source chosen in the admin portal, or the site-wide default. */

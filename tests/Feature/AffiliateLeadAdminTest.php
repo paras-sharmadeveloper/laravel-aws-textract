@@ -7,6 +7,7 @@ use App\Jobs\ParseAndCreateLeadJob;
 use App\Jobs\PrepareUploadsJob;
 use App\Jobs\ProcessOcrJob;
 use App\Models\Affiliate;
+use App\Models\LandingDefault;
 use App\Models\Lead;
 use App\Models\Role;
 use App\Models\User;
@@ -339,6 +340,7 @@ class AffiliateLeadAdminTest extends TestCase
         $this->get('/affiliate/janedoe')
             ->assertOk()
             ->assertSee('Three steps. No debt on your books.')
+            ->assertSee('249M+')
             ->assertSee('href="' . url('janedoe') . '"', false)
             ->assertDontSee('href="' . url('/') . '"', false);
     }
@@ -426,6 +428,117 @@ class AffiliateLeadAdminTest extends TestCase
         $this->get('/affiliate/janedoe')->assertSee('player.vimeo.com/video/76979871')->assertDontSee('youtube-nocookie.com');
 
         $this->assertSame($link, $jane->fresh()->landing_content['video_url']);
+    }
+
+    public function test_script_embeds_only_run_in_a_sandboxed_frame(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+        $code = '<div id="vidalytics_embed_x"></div><script type="text/javascript">load("https://fast.vidalytics.com/embeds/abc/def/");</script>';
+
+        $this->actingAs($this->admin())->put("/admin/affiliates/{$jane->id}/landing", ['content' => ['video_use_embed' => '1', 'video_embed' => $code]])
+            ->assertSessionHasNoErrors();
+
+        $this->get('/affiliate/janedoe')
+            ->assertSee('sandbox="allow-scripts', false)
+            ->assertSee(e($code), false)
+            ->assertDontSee('<script type="text/javascript">', false)
+            ->assertDontSee('allow-same-origin');
+    }
+
+    public function test_a_section_can_be_applied_to_all_affiliates(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+        $sam = Affiliate::create(['name' => 'Sam Lee', 'slug' => 'samlee', 'landing_content' => [
+            'video_url' => 'https://youtu.be/sam-own-video', 'hero_button' => 'Sam says apply',
+        ]]);
+
+        $this->actingAs($this->admin())->put("/admin/affiliates/{$jane->id}/landing", [
+            'apply_to_all' => 'Video',
+            'content' => ['video_use_embed' => '1', 'video_embed' => '<iframe src="https://player.vimeo.com/video/76979871"></iframe>'],
+        ])->assertSessionHasNoErrors();
+
+        // Their custom video is replaced, but custom text in other sections stays
+        $this->assertSame(['hero_button' => 'Sam says apply'], $sam->fresh()->landing_content);
+        $this->assertSame([], $jane->fresh()->landing_content);
+
+        $new = Affiliate::create(['name' => 'New One', 'slug' => 'newone']);
+
+        foreach (['janedoe', 'samlee', 'newone'] as $slug) {
+            $this->get("/affiliate/{$slug}")->assertSee('player.vimeo.com/video/76979871');
+        }
+
+        // An affiliate can still have their own video afterwards, without touching the others
+        $this->put("/admin/affiliates/{$new->id}/landing", ['content' => ['video_use_embed' => '0', 'video_url' => 'https://youtu.be/dQw4w9WgXcQ', 'video_embed' => '']]);
+        $this->get('/affiliate/newone')->assertSee('youtube-nocookie.com/embed/dQw4w9WgXcQ')->assertDontSee('player.vimeo.com');
+        $this->get('/affiliate/janedoe')->assertSee('player.vimeo.com/video/76979871');
+
+        // Clearing the section for everyone returns it to the built-in default
+        $this->put("/admin/affiliates/{$jane->id}/landing", ['apply_to_all' => 'Video', 'content' => ['video_use_embed' => '0', 'video_url' => '', 'video_embed' => '']]);
+        $this->assertSame(0, LandingDefault::count());
+        $this->get('/affiliate/samlee')->assertDontSee('player.vimeo.com');
+    }
+
+    public function test_cleared_fields_fall_back_to_the_all_affiliates_text(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe', 'landing_content' => ['hero_button' => 'Mine']]);
+
+        $this->actingAs($this->admin())->put("/admin/affiliates/{$jane->id}/landing", ['apply_to_all' => 'Hero', 'content' => ['hero_button' => 'For everyone']]);
+        $this->get('/affiliate/janedoe')->assertSee('For everyone');
+
+        $this->put("/admin/affiliates/{$jane->id}/landing", ['content' => ['hero_button' => 'Mine again']]);
+        $this->get('/affiliate/janedoe')->assertSee('Mine again');
+
+        $this->put("/admin/affiliates/{$jane->id}/landing", ['content' => ['hero_button' => '']]);
+        $this->get('/affiliate/janedoe')->assertSee('For everyone');
+    }
+
+    public function test_only_real_sections_can_be_applied_to_all(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+
+        $this->actingAs($this->admin())->put("/admin/affiliates/{$jane->id}/landing", ['apply_to_all' => 'Nope', 'content' => []])
+            ->assertSessionHasErrors('apply_to_all');
+    }
+
+    public function test_buttons_default_to_the_portal_and_can_use_a_custom_link(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+        $sam = Affiliate::create(['name' => 'Sam Lee', 'slug' => 'samlee']);
+        $custom = 'https://calendly.com/jane/intro';
+
+        $this->actingAs($this->admin())->get("/admin/affiliates/{$jane->id}/landing")->assertSee('Submit portal link');
+
+        $this->put("/admin/affiliates/{$jane->id}/landing", ['content' => ['hero_button_link' => 'custom', 'hero_button_url' => $custom]])
+            ->assertSessionHasNoErrors();
+
+        // Only the chosen button moves; the others still lead to her portal
+        $this->get('/affiliate/janedoe')
+            ->assertSee('href="' . $custom . '" class="btn btn-gold"', false)
+            ->assertSee('href="' . url('janedoe') . '" class="btn btn-nav"', false);
+
+        // An all-affiliates portal link still goes to each affiliate's own portal
+        $this->put("/admin/affiliates/{$jane->id}/landing", ['apply_to_all' => 'Hero', 'content' => ['hero_button_link' => 'portal', 'hero_button' => 'Apply today']]);
+        $this->get('/affiliate/janedoe')->assertSee('href="' . url('janedoe') . '" class="btn btn-gold">Apply today', false);
+        $this->get('/affiliate/samlee')->assertSee('href="' . url('samlee') . '" class="btn btn-gold">Apply today', false);
+
+        // A custom link applied to all can still be switched back for one affiliate
+        $this->put("/admin/affiliates/{$jane->id}/landing", ['apply_to_all' => 'Hero', 'content' => ['hero_button_link' => 'custom', 'hero_button_url' => $custom]]);
+        $this->get('/affiliate/samlee')->assertSee('href="' . $custom . '" class="btn btn-gold"', false);
+
+        $this->put("/admin/affiliates/{$sam->id}/landing", ['content' => ['hero_button_link' => 'portal', 'hero_button_url' => $custom]]);
+        $this->get('/affiliate/samlee')->assertSee('href="' . url('samlee') . '" class="btn btn-gold"', false);
+    }
+
+    public function test_custom_button_links_must_be_web_links(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+        $url = "/admin/affiliates/{$jane->id}/landing";
+
+        $this->actingAs($this->admin())->put($url, ['content' => ['nav_button_link' => 'custom']])->assertSessionHasErrors('content.nav_button_url');
+        $this->put($url, ['content' => ['nav_button_link' => 'custom', 'nav_button_url' => 'javascript:alert(1)']])->assertSessionHasErrors('content.nav_button_url');
+
+        // A leftover link doesn't matter while the portal is selected
+        $this->put($url, ['content' => ['nav_button_link' => 'portal', 'nav_button_url' => 'nonsense']])->assertSessionHasNoErrors();
     }
 
     public function test_ticking_embed_needs_a_playable_code(): void
