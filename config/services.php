@@ -51,6 +51,11 @@ return [
             // e.g. https://yourcompany.pipedrive.com — used for deal links in the admin portal
             'app_url' => env('PIPEDRIVE_APP_URL'),
     ],
+    'landing' => [
+            // Default hero video for affiliate landing pages: a platform link, embed code or video file
+            'video_url' => env('LANDING_VIDEO_URL'),
+            'video_poster' => env('LANDING_VIDEO_POSTER'),
+    ],
     'qpdf' => [
             // Used to flatten fillable PDFs before merging supporting documents
             'binary' => env('QPDF_BINARY', 'qpdf'),

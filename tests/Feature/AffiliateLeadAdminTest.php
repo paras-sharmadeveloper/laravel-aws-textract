@@ -331,4 +331,130 @@ class AffiliateLeadAdminTest extends TestCase
             ->assertSee('href="tel:5555550100"', false)
             ->assertSee('(555) 555-0100');
     }
+
+    public function test_affiliate_landing_page_applies_through_their_own_link(): void
+    {
+        Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+
+        $this->get('/affiliate/janedoe')
+            ->assertOk()
+            ->assertSee('Three steps. No debt on your books.')
+            ->assertSee('href="' . url('janedoe') . '"', false)
+            ->assertDontSee('href="' . url('/') . '"', false);
+    }
+
+    public function test_landing_page_404s_for_unknown_or_disabled_affiliates(): void
+    {
+        Affiliate::create(['name' => 'Off', 'slug' => 'off', 'is_active' => false]);
+
+        $this->get('/affiliate/off')->assertNotFound();
+        $this->get('/affiliate/nobody')->assertNotFound();
+        $this->get('/affiliate')->assertNotFound();
+    }
+
+    public function test_admin_lists_the_landing_page_link_and_reserves_its_slug(): void
+    {
+        Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+
+        $this->actingAs($this->admin())->get('/admin/affiliates')->assertOk()->assertSee(url('affiliate/janedoe'));
+
+        $this->post('/admin/affiliates', ['name' => 'Bad', 'slug' => 'affiliate'])->assertSessionHasErrors('slug');
+    }
+
+    public function test_landing_page_plays_the_configured_video(): void
+    {
+        Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+
+        $this->get('/affiliate/janedoe')->assertDontSee('<video', false);
+
+        config(['services.landing.video_url' => 'https://cdn.example.com/hero.mp4']);
+
+        $this->get('/affiliate/janedoe')->assertSee('https://cdn.example.com/hero.mp4');
+    }
+
+    public function test_admin_edits_one_affiliates_landing_page_only(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+        Affiliate::create(['name' => 'Sam Lee', 'slug' => 'samlee']);
+
+        $this->actingAs($this->admin())->get("/admin/affiliates/{$jane->id}/landing")->assertOk()->assertSee('Three steps. No debt on your books.');
+
+        $this->put("/admin/affiliates/{$jane->id}/landing", ['content' => [
+            'hero_title' => 'Cash for *your* <b>bar</b>',
+            'video_url' => 'https://cdn.example.com/jane.mp4',
+            'steps_title' => 'Three steps. No debt on your books.',
+            'faq_1_question' => '',
+        ]])->assertSessionHasNoErrors();
+
+        // Only real changes are stored, so everything else keeps following the defaults
+        $this->assertEqualsCanonicalizing(['hero_title', 'video_url'], array_keys($jane->fresh()->landing_content));
+
+        $this->get('/affiliate/janedoe')
+            ->assertSee('Cash for <em>your</em> &lt;b&gt;bar&lt;/b&gt;', false)
+            ->assertSee('https://cdn.example.com/jane.mp4')
+            ->assertSee('Is this a loan?');
+
+        $this->get('/affiliate/samlee')->assertSee('million+')->assertDontSee('jane.mp4');
+
+        $this->delete("/admin/affiliates/{$jane->id}/landing");
+        $this->assertNull($jane->fresh()->landing_content);
+        $this->get('/affiliate/janedoe')->assertSee('million+');
+    }
+
+    public function test_landing_video_must_be_playable(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+
+        $this->actingAs($this->admin())->put("/admin/affiliates/{$jane->id}/landing", ['content' => ['video_url' => 'javascript:alert(1)']])
+            ->assertSessionHasErrors('content.video_url');
+        $this->put("/admin/affiliates/{$jane->id}/landing", ['content' => ['video_url' => 'https://example.com/about']])
+            ->assertSessionHasErrors('content.video_url');
+    }
+
+    public function test_embed_code_is_only_used_when_ticked(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+        $link = 'https://youtu.be/dQw4w9WgXcQ';
+        $embed = '<iframe src="https://player.vimeo.com/video/76979871"></iframe>';
+
+        $this->actingAs($this->admin())->put("/admin/affiliates/{$jane->id}/landing", ['content' => ['video_url' => $link, 'video_embed' => $embed]])
+            ->assertSessionHasNoErrors();
+        $this->get('/affiliate/janedoe')->assertSee('youtube-nocookie.com/embed/dQw4w9WgXcQ')->assertDontSee('player.vimeo.com');
+
+        $this->put("/admin/affiliates/{$jane->id}/landing", ['content' => ['video_use_embed' => '1', 'video_url' => $link, 'video_embed' => $embed]])
+            ->assertSessionHasNoErrors();
+        $this->get('/affiliate/janedoe')->assertSee('player.vimeo.com/video/76979871')->assertDontSee('youtube-nocookie.com');
+
+        $this->assertSame($link, $jane->fresh()->landing_content['video_url']);
+    }
+
+    public function test_ticking_embed_needs_a_playable_code(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+        $url = "/admin/affiliates/{$jane->id}/landing";
+
+        $this->actingAs($this->admin())->put($url, ['content' => ['video_use_embed' => '1']])->assertSessionHasErrors('content.video_embed');
+        $this->put($url, ['content' => ['video_use_embed' => '1', 'video_embed' => '<script>alert(1)</script>']])->assertSessionHasErrors('content.video_embed');
+
+        // A hidden, unused link doesn't block saving
+        $this->put($url, ['content' => ['video_use_embed' => '1', 'video_url' => 'nonsense', 'video_embed' => '<iframe src="https://player.example.tv/v/9"></iframe>']])
+            ->assertSessionHasNoErrors();
+    }
+
+    public function test_landing_page_embeds_platform_videos_without_the_pasted_html(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+
+        $this->actingAs($this->admin())->put("/admin/affiliates/{$jane->id}/landing", ['content' => [
+            'video_url' => '<iframe src="https://player.vimeo.com/video/76979871" onload="alert(1)"></iframe>',
+            'nav_faq' => 'Common questions',
+            'nav_button' => 'Get started',
+        ]])->assertSessionHasNoErrors();
+
+        $this->get('/affiliate/janedoe')
+            ->assertSee('<iframe src="https://player.vimeo.com/video/76979871"', false)
+            ->assertDontSee('alert(1)')
+            ->assertSee('Common questions')
+            ->assertSee('Get started');
+    }
 }

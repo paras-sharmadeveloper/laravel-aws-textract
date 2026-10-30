@@ -43,6 +43,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/affiliates', [Admin\AffiliateController::class, 'store'])->name('affiliates.store');
             Route::get('/affiliates/{affiliate}/edit', [Admin\AffiliateController::class, 'edit'])->name('affiliates.edit');
             Route::put('/affiliates/{affiliate}', [Admin\AffiliateController::class, 'update'])->name('affiliates.update');
+            Route::get('/affiliates/{affiliate}/landing', [Admin\AffiliateController::class, 'editLanding'])->name('affiliates.landing');
+            Route::put('/affiliates/{affiliate}/landing', [Admin\AffiliateController::class, 'updateLanding'])->name('affiliates.landing.update');
+            Route::delete('/affiliates/{affiliate}/landing', [Admin\AffiliateController::class, 'resetLanding'])->name('affiliates.landing.reset');
             Route::post('/affiliates/{affiliate}/toggle', [Admin\AffiliateController::class, 'toggle'])->name('affiliates.toggle');
             Route::delete('/affiliates/{affiliate}', [Admin\AffiliateController::class, 'destroy'])->name('affiliates.destroy');
         });
@@ -74,7 +77,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| AFFILIATE REFERRAL LINKS — keep last, e.g. /johnsmith
+| AFFILIATE LINKS — keep last, e.g. /affiliate/johnsmith and /johnsmith
 |--------------------------------------------------------------------------
 */
+Route::get('/affiliate/{slug}', [UploadController::class, 'landing'])->where('slug', '[A-Za-z0-9-]+')->name('affiliate.landing');
 Route::get('/{slug}', [UploadController::class, 'affiliate'])->where('slug', '[A-Za-z0-9-]+');

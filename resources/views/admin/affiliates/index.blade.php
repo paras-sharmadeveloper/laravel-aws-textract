@@ -20,8 +20,8 @@
 
     <div class="card">
         <h2>All affiliates</h2>
-        <p class="muted" style="margin: -8px 0 16px">Only links listed here and marked active open the application form.
-            Any other link returns "not found".</p>
+        <p class="muted" style="margin: -8px 0 16px">Only links listed here and marked active open a landing page or the
+            application form. Any other link returns "not found".</p>
         @if ($affiliates->isEmpty())
             <div class="empty">No affiliates yet. Create one above to generate their link.</div>
         @else
@@ -44,6 +44,12 @@
                                     <div class="muted small">{{ collect([$affiliate->email, $affiliate->phone])->filter()->implode(' · ') ?: 'No contact details' }}</div>
                                 </td>
                                 <td style="max-width: 340px">
+                                    <div class="muted small">Landing page</div>
+                                    <div class="link-box">
+                                        <code>{{ $affiliate->landingLink() }}</code>
+                                        <button type="button" class="btn btn-sm" data-copy="{{ $affiliate->landingLink() }}">Copy</button>
+                                    </div>
+                                    <div class="muted small" style="margin-top: 8px">Application</div>
                                     <div class="link-box">
                                         <code>{{ $affiliate->link() }}</code>
                                         <button type="button" class="btn btn-sm" data-copy="{{ $affiliate->link() }}">Copy</button>
@@ -58,6 +64,7 @@
                                 <td>
                                     <div class="actions">
                                         <a href="{{ route('admin.affiliates.edit', $affiliate) }}" class="btn btn-sm">Edit</a>
+                                        <a href="{{ route('admin.affiliates.landing', $affiliate) }}" class="btn btn-sm">Edit page</a>
                                         <form method="POST" action="{{ route('admin.affiliates.toggle', $affiliate) }}">
                                             @csrf
                                             <button type="submit" class="btn btn-sm">{{ $affiliate->is_active ? 'Disable' : 'Enable' }}</button>

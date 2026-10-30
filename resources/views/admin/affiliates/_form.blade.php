@@ -13,7 +13,8 @@
             <span>{{ preg_replace('#^https?://#', '', url('/')) }}/</span>
             <input id="slug" name="slug" value="{{ old('slug', $affiliate?->slug) }}" placeholder="johnsmith">
         </div>
-        <span class="help">Leave blank to generate from the name. Lowercase letters, numbers and dashes.</span>
+        <span class="help">Leave blank to generate from the name. Lowercase letters, numbers and dashes. Also sets their
+            landing page at /affiliate/your-link.</span>
         @error('slug')
             <span class="error-text">{{ $message }}</span>
         @enderror

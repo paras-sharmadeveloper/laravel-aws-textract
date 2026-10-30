@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
+use App\Support\LandingContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -21,7 +22,7 @@ class AffiliateController extends Controller
     {
         Affiliate::create($this->validated($request));
 
-        return redirect()->route('admin.affiliates.index')->with('success', 'Affiliate created — the referral link is ready to share.');
+        return redirect()->route('admin.affiliates.index')->with('success', 'Affiliate created — the landing page and application links are ready to share.');
     }
 
     public function edit(Affiliate $affiliate)
@@ -50,6 +51,31 @@ class AffiliateController extends Controller
         $affiliate->delete();
 
         return back()->with('success', 'Affiliate deleted. Their past leads are kept.');
+    }
+
+    public function editLanding(Affiliate $affiliate)
+    {
+        return view('admin.affiliates.landing', [
+            'affiliate' => $affiliate,
+            'sections' => LandingContent::SECTIONS,
+            'content' => $affiliate->landingContent(),
+        ]);
+    }
+
+    public function updateLanding(Request $request, Affiliate $affiliate)
+    {
+        $data = $request->validate(LandingContent::rules((array) $request->input('content')));
+
+        $affiliate->update(['landing_content' => LandingContent::overrides($data['content'] ?? [])]);
+
+        return back()->with('success', "{$affiliate->name}'s landing page is updated.");
+    }
+
+    public function resetLanding(Affiliate $affiliate)
+    {
+        $affiliate->update(['landing_content' => null]);
+
+        return back()->with('success', "{$affiliate->name}'s landing page is back to the default.");
     }
 
     private function validated(Request $request, ?Affiliate $affiliate = null): array

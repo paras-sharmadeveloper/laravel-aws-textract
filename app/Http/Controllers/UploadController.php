@@ -33,6 +33,19 @@ class UploadController extends Controller
     }
 
     /**
+     * Affiliate landing page (e.g. /affiliate/johnsmith). Its apply buttons lead to
+     * the affiliate's referral link, so the lead is credited to them.
+     */
+    public function landing(string $slug)
+    {
+        $affiliate = Affiliate::findActiveBySlug($slug);
+
+        abort_unless($affiliate, 404);
+
+        return view('affiliate', ['affiliate' => $affiliate]);
+    }
+
+    /**
      * Signed S3 form so the browser uploads a file straight to the bucket.
      * S3 itself enforces the exact key, the content type and the 10MB limit.
      */
