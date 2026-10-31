@@ -345,6 +345,33 @@ class AffiliateLeadAdminTest extends TestCase
             ->assertDontSee('href="' . url('/') . '"', false);
     }
 
+    public function test_landing_page_shows_the_affiliates_contact_details_under_the_hero_button(): void
+    {
+        Affiliate::create([
+            'name' => 'Jane Doe',
+            'slug' => 'janedoe',
+            'email' => 'jane@example.com',
+            'phone' => '(555) 555-0100',
+        ]);
+
+        $this->get('/affiliate/janedoe')
+            ->assertOk()
+            ->assertSeeInOrder(['hero-cta', 'href="tel:5555550100"', '(555) 555-0100', 'href="mailto:jane@example.com"', 'jane@example.com', 'hero-sub'], false);
+    }
+
+    public function test_landing_page_leaves_out_missing_contact_details(): void
+    {
+        Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe', 'phone' => '(555) 555-0100']);
+        Affiliate::create(['name' => 'Sam Lee', 'slug' => 'samlee']);
+
+        $this->get('/affiliate/janedoe')
+            ->assertSee('href="tel:5555550100"', false)
+            ->assertSee('hero-contact', false)
+            ->assertDontSee('mailto:jane', false);
+
+        $this->get('/affiliate/samlee')->assertDontSee('hero-contact', false);
+    }
+
     public function test_landing_page_404s_for_unknown_or_disabled_affiliates(): void
     {
         Affiliate::create(['name' => 'Off', 'slug' => 'off', 'is_active' => false]);

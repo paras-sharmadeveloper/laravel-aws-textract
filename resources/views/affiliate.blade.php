@@ -79,6 +79,29 @@
             <div class="hero-cta">
                 <a href="{{ LandingContent::buttonUrl($c, 'hero_button', $affiliate->link()) }}"
                     class="btn btn-gold">{{ $c['hero_button'] }}</a>
+                @if ($affiliate->phone || $affiliate->email)
+                    <div class="hero-contact">
+                        @if ($affiliate->phone)
+                            <a href="tel:{{ preg_replace('/[^0-9+]/', '', $affiliate->phone) }}">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path
+                                        d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2">
+                                    </path>
+                                </svg>{{ $affiliate->phone }}
+                            </a>
+                        @endif
+                        @if ($affiliate->email)
+                            <a href="mailto:{{ $affiliate->email }}">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                                    <path d="M3 7l9 6 9-6"></path>
+                                </svg>{{ $affiliate->email }}
+                            </a>
+                        @endif
+                    </div>
+                @endif
                 <p class="hero-sub">{{ LandingContent::highlight($c['hero_text'], 'strong') }}</p>
             </div>
 

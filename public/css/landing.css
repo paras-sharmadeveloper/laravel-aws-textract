@@ -210,6 +210,33 @@ p {
     margin-top: 32px;
 }
 
+.hero-contact {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 28px;
+    margin-top: 20px;
+    font-size: 15px;
+    color: var(--on-dark);
+}
+
+.hero-contact a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.hero-contact a:hover {
+    color: var(--gold-2);
+}
+
+.hero-contact svg {
+    flex: none;
+    color: var(--gold-2);
+}
+
 .stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -642,6 +669,50 @@ p {
         display: none;
     }
 
+    .hero {
+        padding: 56px 0;
+    }
+
+    .hero h1 {
+        font-size: 54px;
+    }
+
+    .stats {
+        gap: 24px;
+        text-align: center;
+    }
+
+    .section {
+        padding: 72px 0;
+    }
+
+    .section-head {
+        margin-bottom: 40px;
+    }
+
+    .section-head h2,
+    .funding h2,
+    .faq h2 {
+        font-size: 44px;
+    }
+
+    .funding>.eyebrow,
+    .funding>h2,
+    .funding-note,
+    .faq>.eyebrow,
+    .faq>h2,
+    .apply-card>div:first-child {
+        text-align: center;
+    }
+
+    .apply-card h2 {
+        font-size: 42px;
+    }
+
+    .apply-secure {
+        justify-content: center;
+    }
+
     .steps,
     .apply-card {
         grid-template-columns: 1fr;
@@ -673,12 +744,27 @@ p {
         padding: 48px 0;
     }
 
+    .hero .eyebrow {
+        font-size: 11px;
+        letter-spacing: 2px;
+    }
+
     .hero h1 {
-        font-size: 44px;
+        font-size: 38px;
     }
 
     .hero-sub {
+        margin-top: 24px;
         font-size: 16px;
+    }
+
+    .hero-cta .btn-gold {
+        width: 100%;
+    }
+
+    .hero-contact {
+        margin-top: 16px;
+        font-size: 14px;
     }
 
     .perks {
@@ -701,15 +787,36 @@ p {
         padding-top: 32px;
     }
 
+    .stat strong {
+        font-size: 40px;
+    }
+
+    .stat span {
+        margin-top: 8px;
+    }
+
     .section {
-        padding: 64px 0;
+        padding: 56px 0;
+    }
+
+    .section-head {
+        margin-bottom: 32px;
     }
 
     .section-head h2,
     .funding h2,
     .faq h2,
     .apply-card h2 {
-        font-size: 38px;
+        font-size: 34px;
+    }
+
+    .step {
+        padding: 24px 20px;
+    }
+
+    .benefit,
+    .qualify>div {
+        padding: 20px;
     }
 
     .tiers {
@@ -742,6 +849,30 @@ p {
 
     .faq-list summary {
         font-size: 21px;
+    }
+
+    .faq-list p {
+        padding: 0 8px 20px;
+        font-size: 15px;
+    }
+
+    .site-footer {
+        padding: 40px 0 32px;
+        text-align: center;
+    }
+
+    .footer-top {
+        flex-direction: column;
+    }
+
+    .footer-brand {
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .footer-contact {
+        font-size: 15px;
     }
 }
 

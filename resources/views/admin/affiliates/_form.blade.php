@@ -23,7 +23,7 @@
         <label for="email">Contact email <span class="muted">(optional)</span></label>
         <input id="email" name="email" type="email" class="input" value="{{ old('email', $affiliate?->email) }}"
             placeholder="john@example.com">
-        <span class="help">Shown on their application page and used for the "Contact" button.</span>
+        <span class="help">Shown on their application and landing pages and used for the "Contact" button.</span>
         @error('email')
             <span class="error-text">{{ $message }}</span>
         @enderror
@@ -32,6 +32,7 @@
         <label for="phone">Contact phone <span class="muted">(optional)</span></label>
         <input id="phone" name="phone" class="input" value="{{ old('phone', $affiliate?->phone) }}"
             placeholder="(555) 555-0100">
+        <span class="help">Shown on their application and landing pages.</span>
         @error('phone')
             <span class="error-text">{{ $message }}</span>
         @enderror
