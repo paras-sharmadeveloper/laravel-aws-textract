@@ -23,7 +23,7 @@ class AffiliateController extends Controller
                     ->orWhere('phone', 'like', "%{$term}%"));
             })
             ->latest('id')
-            ->paginate(25)
+            ->paginate(10)
             ->withQueryString()
             ->fragment('all-affiliates');
 

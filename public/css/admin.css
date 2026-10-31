@@ -666,10 +666,36 @@ tbody tr.link-row:hover td {
 
 .pager {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
     margin-top: 18px;
+}
+
+.pages {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.pages .btn {
+    min-width: 32px;
+}
+
+.pages .btn-primary:hover {
+    background: var(--forest);
+}
+
+.pages .is-disabled {
+    opacity: .4;
+    pointer-events: none;
+}
+
+.pages-gap {
+    padding: 0 2px;
+    color: var(--muted);
 }
 
 .empty {

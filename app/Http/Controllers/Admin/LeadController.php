@@ -31,7 +31,7 @@ class LeadController extends Controller
                     ->orWhere('business_name', 'like', "%{$term}%"));
             })
             ->latest()
-            ->paginate(25)
+            ->paginate(10)
             ->withQueryString();
 
         $counts = Lead::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');

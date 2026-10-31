@@ -362,29 +362,60 @@ class AffiliateLeadAdminTest extends TestCase
 
     public function test_admin_pages_through_affiliates_keeping_the_filters(): void
     {
-        foreach (range(10, 36) as $i) {
+        foreach (range(10, 22) as $i) {
             Affiliate::create(['name' => "Partner {$i}", 'slug' => "partner{$i}"]);
         }
 
         $this->actingAs($this->admin());
 
         $this->get('/admin/affiliates')
-            ->assertSee('Showing 1–25 of 27')
-            ->assertSee('Partner 36')
-            ->assertDontSee('Partner 11');
+            ->assertSee('Showing 1–10 of 13')
+            ->assertSee('Partner 22')
+            ->assertDontSee('Partner 12')
+            ->assertSee('<span class="btn btn-sm btn-primary" aria-current="page">1</span>', false)
+            ->assertSee('page=2#all-affiliates" class="btn btn-sm">2</a>', false);
 
         $this->get('/admin/affiliates?page=2')
-            ->assertSee('Showing 26–27 of 27')
+            ->assertSee('Showing 11–13 of 13')
             ->assertSee('Partner 10')
-            ->assertDontSee('Partner 36');
+            ->assertDontSee('Partner 22')
+            ->assertSee('<span class="btn btn-sm btn-primary" aria-current="page">2</span>', false);
 
         $this->get('/admin/affiliates?q=partner&status=active')
             ->assertSee('q=partner&amp;status=active&amp;page=2#all-affiliates', false);
     }
 
+    public function test_pager_shows_even_with_a_single_page(): void
+    {
+        Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+
+        $this->actingAs($this->admin())
+            ->get('/admin/affiliates')
+            ->assertSee('Showing 1–1 of 1')
+            ->assertSee('aria-current="page"', false)
+            ->assertSee('Next →');
+    }
+
+    public function test_admin_pages_through_leads_with_numbered_links(): void
+    {
+        foreach (range(1, 12) as $i) {
+            Lead::create(['email' => "lead{$i}@b.co", 'phone' => '1234567890', 'status' => 'failed', 'stage' => 'ocr', 'payload' => ['x' => 1]]);
+        }
+
+        $this->actingAs($this->admin());
+
+        $this->get('/admin?status=failed')
+            ->assertSee('Showing 1–10 of 12')
+            ->assertSee('status=failed&amp;page=2" class="btn btn-sm">2</a>', false);
+
+        $this->get('/admin?status=failed&page=2')
+            ->assertSee('Showing 11–12 of 12')
+            ->assertSee('<span class="btn btn-sm btn-primary" aria-current="page">2</span>', false);
+    }
+
     public function test_deleting_the_last_affiliate_on_a_page_steps_back_a_page(): void
     {
-        foreach (range(10, 35) as $i) {
+        foreach (range(10, 20) as $i) {
             Affiliate::create(['name' => "Partner {$i}", 'slug' => "partner{$i}"]);
         }
 
@@ -398,7 +429,7 @@ class AffiliateLeadAdminTest extends TestCase
         $this->followingRedirects()
             ->get('/admin/affiliates?page=2')
             ->assertOk()
-            ->assertSee('Showing 1–25 of 25');
+            ->assertSee('Showing 1–10 of 10');
     }
 
     public function test_landing_page_shows_the_affiliates_contact_details_under_the_hero_button(): void

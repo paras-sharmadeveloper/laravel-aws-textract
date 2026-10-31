@@ -99,17 +99,7 @@
                 </table>
             </div>
 
-            <div class="pager">
-                <span class="muted small">Showing {{ $affiliates->firstItem() }}–{{ $affiliates->lastItem() }} of {{ $affiliates->total() }}</span>
-                <div style="display: flex; gap: 8px">
-                    @if ($affiliates->previousPageUrl())
-                        <a href="{{ $affiliates->previousPageUrl() }}" class="btn btn-sm">← Newer</a>
-                    @endif
-                    @if ($affiliates->nextPageUrl())
-                        <a href="{{ $affiliates->nextPageUrl() }}" class="btn btn-sm">Older →</a>
-                    @endif
-                </div>
-            </div>
+            {{ $affiliates->onEachSide(1)->links('admin._pager') }}
         @endif
     </div>
 @endsection
