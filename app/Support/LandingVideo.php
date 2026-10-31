@@ -28,7 +28,7 @@ class LandingVideo
         '#^rumble\.com/embed/(\w+)#' => 'https://rumble.com/embed/$1/',
     ];
 
-    /** @return array{type: 'file'|'embed', src: string}|array{type: 'code', html: string}|null */
+    /** @return array{type: 'file'|'embed', src: string}|array{type: 'code', html: string}|array{type: 'vidalytics', account: string, id: string}|null */
     public static function parse(?string $input): ?array
     {
         $input = trim((string) $input);
@@ -39,6 +39,12 @@ class LandingVideo
 
         if (!str_contains($input, '<')) {
             return self::fromUrl($input);
+        }
+
+        // Vidalytics can't run sandboxed: Safari refuses its blob: player scripts there. Only its
+        // two ids are kept, so the page runs Vidalytics' own player and none of the pasted code.
+        if (preg_match('#fast\.vidalytics\.com/embeds/(\w+)/(\w+)/#i', $input, $vidalytics)) {
+            return ['type' => 'vidalytics', 'account' => $vidalytics[1], 'id' => $vidalytics[2]];
         }
 
         // Embed code: an iframe from any https site, or a script that loads its player from the web

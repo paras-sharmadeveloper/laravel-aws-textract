@@ -547,7 +547,7 @@ class AffiliateLeadAdminTest extends TestCase
     public function test_script_embeds_only_run_in_a_sandboxed_frame(): void
     {
         $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
-        $code = '<div id="vidalytics_embed_x"></div><script type="text/javascript">load("https://fast.vidalytics.com/embeds/abc/def/");</script>';
+        $code = '<div id="player"></div><script type="text/javascript">load("https://cdn.example.com/embeds/abc/def/");</script>';
 
         $this->actingAs($this->admin())->put("/admin/affiliates/{$jane->id}/landing", ['content' => ['video_use_embed' => '1', 'video_embed' => $code]])
             ->assertSessionHasNoErrors();
@@ -557,6 +557,21 @@ class AffiliateLeadAdminTest extends TestCase
             ->assertSee(e($code), false)
             ->assertDontSee('<script type="text/javascript">', false)
             ->assertDontSee('allow-same-origin');
+    }
+
+    public function test_vidalytics_runs_its_own_player_on_the_page_and_none_of_the_pasted_code(): void
+    {
+        $jane = Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe']);
+        $code = '<div id="vidalytics_embed_def"></div><script>stealCookies();load("https://fast.vidalytics.com/embeds/abc/def/");</script>';
+
+        $this->actingAs($this->admin())->put("/admin/affiliates/{$jane->id}/landing", ['content' => ['video_use_embed' => '1', 'video_embed' => $code]])
+            ->assertSessionHasNoErrors();
+
+        $this->get('/affiliate/janedoe')
+            ->assertSee('id="vidalytics_embed_def"', false)
+            ->assertSee("'https://fast.vidalytics.com/embeds/abc/def/'", false)
+            ->assertDontSee('srcdoc', false)
+            ->assertDontSee('stealCookies');
     }
 
     public function test_a_section_can_be_applied_to_all_affiliates(): void

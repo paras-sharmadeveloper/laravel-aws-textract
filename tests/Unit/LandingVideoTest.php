@@ -54,10 +54,24 @@ class LandingVideoTest extends TestCase
 
     public function test_script_embeds_from_other_platforms_are_kept_as_code(): void
     {
-        $code = '<div id="player"></div><script>load("https://fast.vidalytics.com/embeds/abc/def/");</script>';
+        $code = '<div id="player"></div><script>load("https://cdn.example.com/embeds/abc/def/");</script>';
 
         $this->assertSame(['type' => 'code', 'html' => $code], LandingVideo::parse($code));
         $this->assertStringContainsString($code, LandingVideo::document($code));
+    }
+
+    public function test_vidalytics_embeds_keep_only_their_ids(): void
+    {
+        $code = '<div id="vidalytics_embed_def"></div><script>alert(1);load("https://fast.vidalytics.com/embeds/abc/def/");</script>';
+
+        $this->assertSame(['type' => 'vidalytics', 'account' => 'abc', 'id' => 'def'], LandingVideo::parse($code));
+    }
+
+    public function test_lookalike_vidalytics_hosts_stay_sandboxed(): void
+    {
+        $code = '<script>load("https://fast.vidalytics.com.example.com/embeds/abc/def/");</script>';
+
+        $this->assertSame('code', LandingVideo::parse($code)['type']);
     }
 
     public function test_anything_else_is_rejected(): void
