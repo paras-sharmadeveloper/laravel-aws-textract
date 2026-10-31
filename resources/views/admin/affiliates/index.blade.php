@@ -18,12 +18,28 @@
         </form>
     </div>
 
-    <div class="card">
+    <div class="card" id="all-affiliates">
         <h2>All affiliates</h2>
         <p class="muted" style="margin: -8px 0 16px">Only links listed here and marked active open a landing page or the
             application form. Any other link returns "not found".</p>
+
+        @php $filtered = request()->filled('q') || request()->filled('status'); @endphp
+
+        <form method="GET" action="{{ route('admin.affiliates.index') }}#all-affiliates" class="toolbar">
+            <input type="search" name="q" class="input" value="{{ request('q') }}" placeholder="Search name, link, email or phone">
+            <select name="status" class="input" onchange="this.form.submit()">
+                <option value="">All statuses</option>
+                <option value="active" @selected(request('status') === 'active')>Active</option>
+                <option value="disabled" @selected(request('status') === 'disabled')>Disabled</option>
+            </select>
+            <button type="submit" class="btn">Search</button>
+            @if ($filtered)
+                <a href="{{ route('admin.affiliates.index') }}#all-affiliates" class="btn">Clear</a>
+            @endif
+        </form>
+
         @if ($affiliates->isEmpty())
-            <div class="empty">No affiliates yet. Create one above to generate their link.</div>
+            <div class="empty">{{ $filtered ? 'No affiliates match these filters.' : 'No affiliates yet. Create one above to generate their link.' }}</div>
         @else
             <div class="table-wrap">
                 <table>
@@ -81,6 +97,18 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+
+            <div class="pager">
+                <span class="muted small">Showing {{ $affiliates->firstItem() }}–{{ $affiliates->lastItem() }} of {{ $affiliates->total() }}</span>
+                <div style="display: flex; gap: 8px">
+                    @if ($affiliates->previousPageUrl())
+                        <a href="{{ $affiliates->previousPageUrl() }}" class="btn btn-sm">← Newer</a>
+                    @endif
+                    @if ($affiliates->nextPageUrl())
+                        <a href="{{ $affiliates->nextPageUrl() }}" class="btn btn-sm">Older →</a>
+                    @endif
+                </div>
             </div>
         @endif
     </div>

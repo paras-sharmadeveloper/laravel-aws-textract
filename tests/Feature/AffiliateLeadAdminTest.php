@@ -345,6 +345,62 @@ class AffiliateLeadAdminTest extends TestCase
             ->assertDontSee('href="' . url('/') . '"', false);
     }
 
+    public function test_admin_filters_affiliates_by_search_and_status(): void
+    {
+        Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe', 'email' => 'jane@example.com']);
+        Affiliate::create(['name' => 'Sam Lee', 'slug' => 'samlee', 'phone' => '(555) 555-0100', 'is_active' => false]);
+
+        $this->actingAs($this->admin());
+
+        $this->get('/admin/affiliates?q=jane@')->assertSee('Jane Doe')->assertDontSee('Sam Lee');
+        $this->get('/admin/affiliates?q=555-0100')->assertSee('Sam Lee')->assertDontSee('Jane Doe');
+        $this->get('/admin/affiliates?q=samlee')->assertSee('Sam Lee')->assertDontSee('Jane Doe');
+        $this->get('/admin/affiliates?status=active')->assertSee('Jane Doe')->assertDontSee('Sam Lee');
+        $this->get('/admin/affiliates?status=disabled')->assertSee('Sam Lee')->assertDontSee('Jane Doe');
+        $this->get('/admin/affiliates?q=jane&status=disabled')->assertSee('No affiliates match these filters.');
+    }
+
+    public function test_admin_pages_through_affiliates_keeping_the_filters(): void
+    {
+        foreach (range(10, 36) as $i) {
+            Affiliate::create(['name' => "Partner {$i}", 'slug' => "partner{$i}"]);
+        }
+
+        $this->actingAs($this->admin());
+
+        $this->get('/admin/affiliates')
+            ->assertSee('Showing 1–25 of 27')
+            ->assertSee('Partner 36')
+            ->assertDontSee('Partner 11');
+
+        $this->get('/admin/affiliates?page=2')
+            ->assertSee('Showing 26–27 of 27')
+            ->assertSee('Partner 10')
+            ->assertDontSee('Partner 36');
+
+        $this->get('/admin/affiliates?q=partner&status=active')
+            ->assertSee('q=partner&amp;status=active&amp;page=2#all-affiliates', false);
+    }
+
+    public function test_deleting_the_last_affiliate_on_a_page_steps_back_a_page(): void
+    {
+        foreach (range(10, 35) as $i) {
+            Affiliate::create(['name' => "Partner {$i}", 'slug' => "partner{$i}"]);
+        }
+
+        $oldest = Affiliate::where('slug', 'partner10')->first();
+
+        $this->actingAs($this->admin())
+            ->from('/admin/affiliates?page=2')
+            ->delete("/admin/affiliates/{$oldest->id}")
+            ->assertRedirect('/admin/affiliates?page=2');
+
+        $this->followingRedirects()
+            ->get('/admin/affiliates?page=2')
+            ->assertOk()
+            ->assertSee('Showing 1–25 of 25');
+    }
+
     public function test_landing_page_shows_the_affiliates_contact_details_under_the_hero_button(): void
     {
         Affiliate::create([

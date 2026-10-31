@@ -11,9 +11,28 @@ use Illuminate\Validation\Rule;
 
 class AffiliateController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $affiliates = Affiliate::withCount('leads')->latest()->get();
+        $affiliates = Affiliate::withCount('leads')
+            ->when(in_array($request->status, ['active', 'disabled']), fn($q) => $q->where('is_active', $request->status === 'active'))
+            ->when($request->q, function ($q, $term) {
+                $q->where(fn($q) => $q
+                    ->where('name', 'like', "%{$term}%")
+                    ->orWhere('slug', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%")
+                    ->orWhere('phone', 'like', "%{$term}%"));
+            })
+            ->latest('id')
+            ->paginate(25)
+            ->withQueryString()
+            ->fragment('all-affiliates');
+
+        // Deleting or filtering away the last row of a page leaves it empty: step back to the real last page
+        if ($affiliates->isEmpty() && $affiliates->currentPage() > 1) {
+            $request->session()->reflash();
+
+            return redirect($affiliates->url($affiliates->lastPage()));
+        }
 
         return view('admin.affiliates.index', compact('affiliates'));
     }
