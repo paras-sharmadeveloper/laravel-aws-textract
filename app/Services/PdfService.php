@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use setasign\Fpdi\PdfParser\PdfParserException;
 use setasign\Fpdi\Tcpdf\Fpdi;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
@@ -109,12 +110,19 @@ class PdfService
     }
 
 
-    public function mergePdfs(array $pdfPaths)
+    /**
+     * @param string[] $skipped Receives PDFs FPDI could not parse, so the caller
+     *                          can store them untouched instead of failing.
+     * @return ?string Merged PDF path, or null when no page could be imported.
+     */
+    public function mergePdfs(array $pdfPaths, array &$skipped = [])
     {
         $pdf = new Fpdi();
 
         $pdf->SetPrintHeader(false);
         $pdf->SetPrintFooter(false);
+
+        $imported = 0;
 
         foreach ($pdfPaths as $file) {
 
@@ -122,7 +130,18 @@ class PdfService
                 continue;
             }
 
-            $pageCount = $pdf->setSourceFile($file);
+            try {
+                $pageCount = $pdf->setSourceFile($file);
+            } catch (PdfParserException $e) {
+                Log::warning('FPDI cannot parse PDF, keeping it as a separate file', [
+                    'file' => $file,
+                    'error' => $e->getMessage(),
+                ]);
+                $skipped[] = $file;
+                continue;
+            }
+
+            $imported += $pageCount;
 
             for ($i = 1; $i <= $pageCount; $i++) {
 
@@ -134,6 +153,10 @@ class PdfService
 
                 $pdf->useTemplate($template);
             }
+        }
+
+        if ($imported === 0) {
+            return null;
         }
 
         $output = tempnam(sys_get_temp_dir(), 'merged') . '.pdf';
@@ -197,9 +220,12 @@ class PdfService
         //     'path' => $pdfPaths,
         // ]);
 
+        $skipped = [];
+        $merged = $pdfPaths ? $this->mergePdfs($pdfPaths, $skipped) : null;
+
         return [
-            'merged' => $pdfPaths ? $this->mergePdfs($pdfPaths) : null,
-            'separate' => $separate,
+            'merged' => $merged,
+            'separate' => array_merge($separate, $skipped),
         ];
     }
 
@@ -217,6 +243,9 @@ class PdfService
                 config('services.qpdf.binary', 'qpdf'),
                 '--flatten-annotations=all',
                 '--generate-appearances',
+                // Write a classic xref table: the free FPDI parser cannot read
+                // compressed xref/object streams (PDF 1.5+).
+                '--object-streams=disable',
                 $path,
                 $output,
             ]);
