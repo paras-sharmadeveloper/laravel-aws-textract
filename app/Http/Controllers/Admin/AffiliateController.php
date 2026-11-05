@@ -131,6 +131,7 @@ class AffiliateController extends Controller
         ]);
 
         $data['is_active'] = $request->boolean('is_active', $affiliate?->is_active ?? true);
+        $data['source_channel'] = ($data['source_channel'] ?? null) ?: Affiliate::DEFAULT_SOURCE_CHANNEL;
 
         return $data;
     }

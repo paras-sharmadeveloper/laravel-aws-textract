@@ -41,9 +41,8 @@
     <div class="field">
         <label for="source_channel">Pipedrive source channel</label>
         <select id="source_channel" name="source_channel" class="input">
-            <option value="">Not set</option>
             @foreach (\App\Models\Affiliate::SOURCE_CHANNELS as $channel)
-                <option value="{{ $channel }}" @selected(old('source_channel', $affiliate?->source_channel) === $channel)>{{ $channel }}</option>
+                <option value="{{ $channel }}" @selected(old('source_channel', $affiliate?->source_channel ?: \App\Models\Affiliate::DEFAULT_SOURCE_CHANNEL) === $channel)>{{ $channel }}</option>
             @endforeach
         </select>
         <span class="help">Set as "Source channel" on every deal from this affiliate. "Source channel ID" is set to

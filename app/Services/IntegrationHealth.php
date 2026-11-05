@@ -109,6 +109,9 @@ class IntegrationHealth
 
                 return [
                     'Affiliate emails' => $mail['notify_affiliate'] ? 'On' : 'Off',
+                    'Team emails' => $mail['notify_team']
+                        ? (implode(', ', MailSettings::emailList($mail['team_recipients'])) ?: 'On, but no recipients')
+                        : 'Off',
                     'SMTP server' => $mail['host'] ? $mail['host'] . ':' . $mail['port'] : null,
                     'Encryption' => strtoupper($mail['encryption']),
                     'Username' => $mail['username'],
@@ -265,8 +268,15 @@ class IntegrationHealth
         });
 
         $checks[] = $settings['notify_affiliate']
-            ? ['label' => 'Affiliate emails', 'ok' => true, 'detail' => 'Sent when a lead is submitted through an affiliate link']
+            ? ['label' => 'Affiliate emails', 'ok' => true, 'detail' => 'Sent once a lead from an affiliate link is in Pipedrive']
             : ['label' => 'Affiliate emails', 'ok' => null, 'detail' => 'Turned off in the email settings'];
+
+        $team = MailSettings::emailList($settings['team_recipients']);
+        $checks[] = match (true) {
+            !$settings['notify_team'] => ['label' => 'Team emails', 'ok' => null, 'detail' => 'Turned off in the email settings'],
+            !$team => ['label' => 'Team emails', 'ok' => null, 'detail' => 'No team recipients are set'],
+            default => ['label' => 'Team emails', 'ok' => true, 'detail' => 'Sent to ' . implode(', ', $team)],
+        };
 
         return $this->result($checks, 'Connected to ' . $settings['host']);
     }

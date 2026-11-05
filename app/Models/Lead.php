@@ -14,7 +14,7 @@ class Lead extends Model
         'affiliate_id', 'deal_folder', 'owner_name', 'business_name', 'email', 'phone',
         'locations', 'new_location', 'status', 'stage', 'error', 'payload', 'ocr_result',
         'pipedrive_person_id', 'pipedrive_org_id', 'pipedrive_deal_id', 'attempts', 'completed_at',
-        'affiliate_notified_at',
+        'affiliate_notified_at', 'team_notified_at',
     ];
 
     protected function casts(): array
@@ -25,6 +25,7 @@ class Lead extends Model
             'ocr_result' => 'array',
             'completed_at' => 'datetime',
             'affiliate_notified_at' => 'datetime',
+            'team_notified_at' => 'datetime',
         ];
     }
 

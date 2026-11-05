@@ -257,7 +257,9 @@ class PipedriveService
 
         $fields = ['channel_id' => $affiliate->link()];
 
-        if (filled($affiliate->source_channel) && $optionId = $this->channelOptionId($affiliate->source_channel)) {
+        $channel = $affiliate->source_channel ?: Affiliate::DEFAULT_SOURCE_CHANNEL;
+
+        if ($optionId = $this->channelOptionId($channel)) {
             $fields['channel'] = $optionId;
         }
 

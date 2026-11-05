@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\ParseAndCreateLeadJob;
 use App\Jobs\SendAffiliateLeadEmailJob;
+use App\Jobs\SendLeadEmailJob;
 use App\Mail\LeadSubmittedMail;
 use App\Models\Affiliate;
 use App\Models\Lead;
@@ -45,7 +46,8 @@ class AffiliateLeadEmailTest extends TestCase
             'from_address' => 'no-reply@example.com',
             'from_name' => 'DPS Payments',
             'reply_to' => 'support@example.com',
-            'bcc' => 'sales@example.com, boss@example.com',
+            'notify_team' => true,
+            'team_recipients' => 'owner@example.com, sales@example.com',
             'subject' => 'New lead: {{business_name}} for {{ affiliate_name }}',
             'body' => '',
             'timezone' => 'America/New_York',
@@ -74,7 +76,7 @@ class AffiliateLeadEmailTest extends TestCase
 
         $this->submit('jhonrocha');
 
-        Queue::assertNotPushed(SendAffiliateLeadEmailJob::class);
+        Queue::assertNotPushed(SendLeadEmailJob::class);
     }
 
     public function test_job_sends_the_template_to_the_affiliate_once(): void
@@ -92,7 +94,6 @@ class AffiliateLeadEmailTest extends TestCase
         Mail::assertSent(LeadSubmittedMail::class, 1);
         Mail::assertSent(LeadSubmittedMail::class, function (LeadSubmittedMail $mail) {
             return $mail->hasTo('jhon@example.com')
-                && $mail->hasBcc('sales@example.com') && $mail->hasBcc('boss@example.com')
                 && $mail->hasReplyTo('support@example.com')
                 && $mail->subjectLine === 'New lead: Jane Bakery for Jhon Rocha'
                 && str_starts_with($mail->bodyText, "Hi Jhon,\n\nGood news")
@@ -146,7 +147,7 @@ class AffiliateLeadEmailTest extends TestCase
             'notify_affiliate' => 1, 'host' => 'smtp.gmail.com', 'port' => 587, 'timezone' => 'America/Chicago',
             'encryption' => 'tls', 'username' => 'me@gmail.com', 'password' => 'app-password-123',
             'verify_peer' => 1, 'timeout' => 15, 'from_address' => 'me@gmail.com', 'from_name' => 'DPS',
-            'bcc' => '', 'subject' => '',
+            'notify_team' => 1, 'team_recipients' => 'owner@example.com', 'subject' => '',
         ];
 
         $this->actingAs($admin)->put('/admin/integrations/email', $form)->assertRedirect('/admin/integrations/email');
@@ -172,8 +173,8 @@ class AffiliateLeadEmailTest extends TestCase
     {
         $this->actingAs($this->admin())->put('/admin/integrations/email', [
             'notify_affiliate' => 1, 'host' => '', 'port' => 99999, 'encryption' => 'bogus',
-            'timeout' => 15, 'from_address' => 'not-an-email', 'bcc' => 'ok@example.com, nope', 'timezone' => 'Mars/Base',
-        ])->assertSessionHasErrors(['host', 'port', 'encryption', 'from_address', 'bcc', 'timezone']);
+            'timeout' => 15, 'from_address' => 'not-an-email', 'notify_team' => 1, 'team_recipients' => 'ok@example.com, nope', 'timezone' => 'Mars/Base',
+        ])->assertSessionHasErrors(['host', 'port', 'encryption', 'from_address', 'team_recipients', 'timezone']);
     }
 
     public function test_view_only_role_cannot_change_email_settings(): void
@@ -226,8 +227,11 @@ class AffiliateLeadEmailTest extends TestCase
                 'owner_name' => 'A', 'business_name' => 'B', 'documents' => [], 'statements' => []]), 'handle']);
         }
 
-        Queue::assertPushed(SendAffiliateLeadEmailJob::class, 1);
-        Queue::assertPushed(SendAffiliateLeadEmailJob::class, fn($job) => $job->leadId === $fresh->id);
+        // Fresh lead: affiliate + team. Lead already emailed to its affiliate: team only
+        Queue::assertPushed(SendLeadEmailJob::class, 3);
+        Queue::assertPushed(SendLeadEmailJob::class, fn($job) => $job->leadId === $fresh->id && $job->audience === 'affiliate');
+        Queue::assertPushed(SendLeadEmailJob::class, fn($job) => $job->leadId === $fresh->id && $job->audience === 'team');
+        Queue::assertNotPushed(SendLeadEmailJob::class, fn($job) => $job->leadId === $notified->id && $job->audience === 'affiliate');
     }
 
     public function test_deal_gets_source_channel_option_and_affiliate_link(): void
@@ -248,6 +252,10 @@ class AffiliateLeadEmailTest extends TestCase
         Http::assertSent(fn($request) => str_contains($request->url(), '/deals?')
             && $request['channel'] === 47
             && $request['channel_id'] === url('desh'));
+
+        // No channel chosen: the default (Affiliate - MCA Broker) is used
+        $affiliate->source_channel = null;
+        $this->assertSame(['channel_id' => url('desh'), 'channel' => 47], app(PipedriveService::class)->sourceFields($affiliate));
     }
 
     public function test_deal_without_matching_channel_still_gets_the_link(): void
@@ -273,5 +281,85 @@ class AffiliateLeadEmailTest extends TestCase
 
         $this->actingAs($admin)->post('/admin/affiliates', ['name' => 'X', 'slug' => 'x', 'source_channel' => 'Made Up'])
             ->assertSessionHasErrors('source_channel');
+
+        $this->actingAs($admin)->post('/admin/affiliates', ['name' => 'No Pick', 'slug' => 'nopick'])->assertSessionHasNoErrors();
+        $this->assertSame('Affiliate - MCA Broker', Affiliate::where('slug', 'nopick')->value('source_channel'));
+        $this->actingAs($admin)->get('/admin/affiliates/' . Affiliate::where('slug', 'nopick')->value('id') . '/edit')
+            ->assertSee('<option value="Affiliate - MCA Broker" selected', false);
+    }
+
+    public function test_team_email_uses_its_template_and_recipients(): void
+    {
+        Mail::fake();
+        $this->configureMail();
+        $affiliate = Affiliate::create(['name' => 'Jhon Rocha', 'slug' => 'jhonrocha', 'email' => 'jhon@example.com']);
+        $lead = Lead::create(['affiliate_id' => $affiliate->id, 'owner_name' => 'Jane Doe', 'business_name' => 'Jane Bakery',
+            'email' => 'jane@example.com', 'phone' => '6465550100', 'locations' => 3, 'new_location' => true, 'status' => 'processing']);
+
+        (new SendLeadEmailJob($lead->id, SendLeadEmailJob::TEAM))->handle();
+        (new SendLeadEmailJob($lead->id, SendLeadEmailJob::TEAM))->handle();
+
+        Mail::assertSent(LeadSubmittedMail::class, 1);
+        Mail::assertSent(LeadSubmittedMail::class, function (LeadSubmittedMail $mail) use ($lead) {
+            return $mail->hasTo('owner@example.com') && $mail->hasTo('sales@example.com') && !$mail->hasTo('jhon@example.com')
+                && $mail->hasReplyTo('jhon@example.com')
+                && $mail->subjectLine === 'New Submission: Jane Bakery (3 locations) via Jhon Rocha'
+                && str_contains($mail->bodyText, "AFFILIATE\nName: Jhon Rocha\nEmail: jhon@example.com")
+                && str_contains($mail->bodyText, "Cell: (646) 555-0100\nEmail: jane@example.com\nLocations: 3\nNew location: Yes")
+                && str_contains($mail->bodyText, 'View submission and files: ' . route('admin.leads.show', $lead));
+        });
+        $this->assertNotNull($lead->fresh()->team_notified_at);
+        $this->assertNull($lead->fresh()->affiliate_notified_at);
+    }
+
+    public function test_team_email_for_direct_submission_and_when_off(): void
+    {
+        Mail::fake();
+        $this->configureMail();
+        $lead = Lead::create(['owner_name' => 'Jane Doe', 'business_name' => 'Jane Bakery', 'email' => 'jane@example.com',
+            'phone' => '6465550100', 'status' => 'processing']);
+
+        (new SendLeadEmailJob($lead->id, SendLeadEmailJob::TEAM))->handle();
+
+        Mail::assertSent(LeadSubmittedMail::class, fn($mail) => $mail->subjectLine === 'New Submission: Jane Bakery (1 locations) via Direct'
+            && str_contains($mail->bodyText, "Name: Direct\nEmail: None (direct submission)")
+            && str_contains($mail->bodyText, 'New location: No'));
+
+        $other = Lead::create(['owner_name' => 'A', 'business_name' => 'B', 'email' => 'a@example.com', 'phone' => '6465550100', 'status' => 'processing']);
+        $this->configureMail(['notify_team' => false]);
+        (new SendLeadEmailJob($other->id, SendLeadEmailJob::TEAM))->handle();
+
+        Mail::assertSent(LeadSubmittedMail::class, 1);
+    }
+
+    public function test_old_affiliate_job_class_still_runs(): void
+    {
+        Mail::fake();
+        $this->configureMail();
+        $affiliate = Affiliate::create(['name' => 'Jhon', 'slug' => 'jhon', 'email' => 'jhon@example.com']);
+        $lead = Lead::create(['affiliate_id' => $affiliate->id, 'owner_name' => 'A', 'business_name' => 'B',
+            'email' => 'a@example.com', 'phone' => '6465550100', 'status' => 'processing']);
+
+        (new SendAffiliateLeadEmailJob($lead->id))->handle();
+
+        Mail::assertSent(LeadSubmittedMail::class, fn($mail) => $mail->hasTo('jhon@example.com'));
+    }
+
+    public function test_old_bcc_setting_becomes_team_recipients(): void
+    {
+        Setting::create(['key' => 'mail.bcc', 'value' => 'owner@example.com']);
+
+        $this->assertSame('owner@example.com', MailSettings::all()['team_recipients']);
+    }
+
+    public function test_admin_can_send_a_test_team_email(): void
+    {
+        Mail::fake();
+        $this->configureMail();
+
+        $this->actingAs($this->admin())->post('/admin/integrations/email/send-test', ['to' => 'me@example.com', 'template' => 'team'])
+            ->assertSessionHas('success');
+
+        Mail::assertSent(LeadSubmittedMail::class, fn($mail) => str_starts_with($mail->subjectLine, '[Test] New Submission: Sample Coffee Co. (2 locations) via Sample Affiliate'));
     }
 }

@@ -128,9 +128,13 @@ class ParseAndCreateLeadJob implements ShouldQueue
             'pipedrive_deal_id' => $ids['deal_id'],
         ]);
 
-        // The affiliate hears about the lead once it is in Pipedrive
+        // The affiliate and the team hear about the lead once it is in Pipedrive
         if ($leadId && filled($lead?->affiliate?->email) && !$lead->affiliate_notified_at) {
-            SendAffiliateLeadEmailJob::dispatch($leadId);
+            SendLeadEmailJob::dispatch($leadId, SendLeadEmailJob::AFFILIATE);
+        }
+
+        if ($leadId && $lead && !$lead->team_notified_at) {
+            SendLeadEmailJob::dispatch($leadId, SendLeadEmailJob::TEAM);
         }
 
         // 👉 Attachments job (already correct)

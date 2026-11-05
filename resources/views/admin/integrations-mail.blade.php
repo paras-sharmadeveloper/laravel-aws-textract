@@ -10,9 +10,9 @@
         </div>
     </div>
 
-    <p class="muted" style="margin: -12px 0 24px; max-width: 720px">When an application submitted through an affiliate's
-        link has been created in Pipedrive, that affiliate gets an email at the contact email saved on the affiliate.
-        Each lead is only emailed once, even if it is resynced.
+    <p class="muted" style="margin: -12px 0 24px; max-width: 720px">Once a submission has been created in Pipedrive,
+        two emails go out: one to the affiliate whose link it came through (at the contact email saved on the affiliate),
+        and one to your team. Each lead is only emailed once, even if it is resynced.
         @if ($affiliatesWithoutEmail)
             <strong>{{ $affiliatesWithoutEmail }} active {{ Str::plural('affiliate', $affiliatesWithoutEmail) }}
                 {{ $affiliatesWithoutEmail === 1 ? 'has' : 'have' }} no email</strong> and won't be notified.
@@ -29,6 +29,11 @@
                 <input type="hidden" name="notify_affiliate" value="0">
                 <input type="checkbox" name="notify_affiliate" value="1" @checked(old('notify_affiliate', $settings['notify_affiliate']))>
                 Email the affiliate once their lead is created in Pipedrive
+            </label>
+            <label class="check" style="margin-top: 12px">
+                <input type="hidden" name="notify_team" value="0">
+                <input type="checkbox" name="notify_team" value="1" @checked(old('notify_team', $settings['notify_team']))>
+                Email the team about every new submission (including direct ones with no affiliate)
             </label>
 
             <div class="form-grid" style="margin-top: 20px">
@@ -48,54 +53,63 @@
                     <label for="reply_to">Reply-to address <span class="muted">(optional)</span></label>
                     <input id="reply_to" name="reply_to" type="email" class="input"
                         value="{{ old('reply_to', $settings['reply_to']) }}" placeholder="support@yourcompany.com">
-                    <span class="help">Where replies from affiliates go. Defaults to the "from" address.</span>
+                    <span class="help">Where replies from affiliates go. Defaults to the "from" address. Replies to
+                        the team email go straight to the affiliate.</span>
                     @error('reply_to')
                         <span class="error-text">{{ $message }}</span>
                     @enderror
                 </div>
                 <div class="field">
-                    <label for="bcc">Send a copy to <span class="muted">(optional)</span></label>
-                    <input id="bcc" name="bcc" class="input" value="{{ old('bcc', $settings['bcc']) }}"
-                        placeholder="sales@yourcompany.com, manager@yourcompany.com">
-                    <span class="help">Blind copy for your team. Separate several addresses with commas.</span>
-                    @error('bcc')
+                    <label for="team_recipients">Team recipients</label>
+                    <input id="team_recipients" name="team_recipients" class="input"
+                        value="{{ old('team_recipients', $settings['team_recipients']) }}"
+                        placeholder="owner@yourcompany.com, sales@yourcompany.com">
+                    <span class="help">Who gets the team email. Separate several addresses with commas.</span>
+                    @error('team_recipients')
                         <span class="error-text">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <h2>Email template</h2>
-            <div class="form-grid">
-                <div class="field field-wide">
-                    <label for="subject">Subject</label>
-                    <input id="subject" name="subject" class="input" maxlength="200"
-                        value="{{ old('subject', $settings['subject']) }}">
-                    @error('subject')
-                        <span class="error-text">{{ $message }}</span>
-                    @enderror
+        @foreach ([
+            '' => ['Affiliate email', 'Sent to the affiliate whose link the submission came through.'],
+            'team_' => ['Team email', 'Sent to the team recipients above.'],
+        ] as $prefix => [$title, $intro])
+            <div class="card">
+                <h2>{{ $title }}</h2>
+                <p class="muted" style="margin: -6px 0 16px">{{ $intro }}</p>
+                <div class="form-grid">
+                    <div class="field field-wide">
+                        <label for="{{ $prefix }}subject">Subject</label>
+                        <input id="{{ $prefix }}subject" name="{{ $prefix }}subject" class="input" maxlength="200" data-template
+                            value="{{ old($prefix . 'subject', $settings[$prefix . 'subject']) }}">
+                        @error($prefix . 'subject')
+                            <span class="error-text">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="field field-wide">
+                        <label for="{{ $prefix }}body">Message</label>
+                        <textarea id="{{ $prefix }}body" name="{{ $prefix }}body" class="input input-area" rows="16" maxlength="5000"
+                            data-template>{{ old($prefix . 'body', $settings[$prefix . 'body']) }}</textarea>
+                        <span class="help">Plain text. Leave a blank line between paragraphs.
+                            <a href="#" data-reset="{{ $prefix }}body">Restore the default message</a></span>
+                        @error($prefix . 'body')
+                            <span class="error-text">{{ $message }}</span>
+                        @enderror
+                    </div>
                 </div>
-                <div class="field field-wide">
-                    <label for="body">Message</label>
-                    <textarea id="body" name="body" class="input input-area" rows="16" maxlength="5000">{{ old('body', $settings['body']) }}</textarea>
-                    <span class="help">Plain text. Leave a blank line between paragraphs.
-                        <a href="#" id="resetBody">Restore the default message</a></span>
-                    @error('body')
-                        <span class="error-text">{{ $message }}</span>
-                    @enderror
+                <div class="help" style="margin-top: 14px; font-size: 12px">
+                    <strong>Placeholders</strong> — click to insert into the subject or message you last clicked in:
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px">
+                        @foreach ($placeholders as $tag => $label)
+                            <button type="button" class="btn btn-sm" data-placeholder="{{ $tag }}" data-for="{{ $prefix }}body"
+                                title="{{ $label }}" style="font-family: ui-monospace, Menlo, monospace; font-size: 12px">{{ $tag }}</button>
+                        @endforeach
+                    </div>
                 </div>
             </div>
-            <div class="help" style="margin-top: 14px; font-size: 12px">
-                <strong>Placeholders</strong> (subject and message) — click to insert:
-                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px">
-                    @foreach ($placeholders as $tag => $label)
-                        <button type="button" class="btn btn-sm" data-placeholder="{{ $tag }}" title="{{ $label }}"
-                            style="font-family: ui-monospace, Menlo, monospace; font-size: 12px">{{ $tag }}</button>
-                    @endforeach
-                </div>
-            </div>
-        </div>
+        @endforeach
 
         <div class="card">
             <h2>Sender</h2>
@@ -200,11 +214,15 @@
 
     <div class="card">
         <h2>Send a test email</h2>
-        <p class="muted" style="margin: -6px 0 16px">Sends a sample "new application" email using the saved settings. Save
-            any changes first.</p>
+        <p class="muted" style="margin: -6px 0 16px">Sends either email with sample data using the saved settings. Save any
+            changes first.</p>
         <form method="POST" action="{{ route('admin.integrations.mail.test') }}"
             style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start">
             @csrf
+            <select name="template" class="input" style="width: auto" aria-label="Which email to test">
+                <option value="affiliate" @selected(old('template') !== 'team')>Affiliate email</option>
+                <option value="team" @selected(old('template') === 'team')>Team email</option>
+            </select>
             <div class="field" style="flex: 1; min-width: 240px">
                 <input name="to" type="email" class="input" required value="{{ old('to', auth()->user()->email) }}"
                     aria-label="Send the test email to">
@@ -218,14 +236,16 @@
 
     <script>
         (function() {
-            const body = document.getElementById('body');
-            const subject = document.getElementById('subject');
-            let target = body;
+            const defaults = @json($defaults);
+            let last = null;
 
-            [body, subject].forEach(el => el.addEventListener('focus', () => target = el));
+            document.querySelectorAll('[data-template]').forEach(el => el.addEventListener('focus', () => last = el));
 
             document.querySelectorAll('[data-placeholder]').forEach(function(btn) {
                 btn.addEventListener('click', function() {
+                    // The field last clicked in this card, otherwise this card's message
+                    const card = btn.closest('.card');
+                    const target = last && card.contains(last) ? last : document.getElementById(btn.dataset.for);
                     const text = btn.dataset.placeholder;
                     const start = target.selectionStart ?? target.value.length;
                     const end = target.selectionEnd ?? target.value.length;
@@ -235,9 +255,13 @@
                 });
             });
 
-            document.getElementById('resetBody').addEventListener('click', function(e) {
-                e.preventDefault();
-                if (confirm('Replace the message with the default text?')) body.value = @json($defaultBody);
+            document.querySelectorAll('[data-reset]').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (confirm('Replace the message with the default text?')) {
+                        document.getElementById(link.dataset.reset).value = defaults[link.dataset.reset];
+                    }
+                });
             });
         })();
     </script>

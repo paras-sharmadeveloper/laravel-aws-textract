@@ -39,17 +39,42 @@ Regards,
 DPS Payments
 TXT;
 
-    /** Placeholders usable in the subject and body, with what each one becomes. */
+    public const DEFAULT_TEAM_SUBJECT = 'New Submission: {{business_name}} ({{number_of_locations}} locations) via {{affiliate_full_name}}';
+
+    public const DEFAULT_TEAM_BODY = <<<'TXT'
+New submission received. Same-day response required.
+
+AFFILIATE
+Name: {{affiliate_full_name}}
+Email: {{affiliate_email}}
+
+MERCHANT
+Owner: {{owner_full_name}}
+Business (DBA): {{business_name}}
+Cell: {{owner_cell_phone}}
+Email: {{owner_email}}
+Locations: {{number_of_locations}}
+New location: {{new_location_yes_no}}
+Submitted: {{submission_date_time}}
+
+View submission and files: {{submission_link}}
+TXT;
+
+    /** Placeholders usable in every subject and message, with what each one becomes. */
     public const PLACEHOLDERS = [
         'affiliate_first_name' => "Affiliate's first name",
-        'affiliate_name' => "Affiliate's full name",
+        'affiliate_full_name' => "Affiliate's full name (\"Direct\" when there is none)",
+        'affiliate_email' => "Affiliate's email",
         'owner_full_name' => "Merchant's full name",
         'owner_first_name' => "Merchant's first name",
-        'business_name' => 'Business name',
-        'number_of_locations' => 'Number of locations',
-        'submission_date_time' => 'Date and time submitted',
+        'business_name' => 'Business name (DBA)',
+        'owner_cell_phone' => "Merchant's cell, e.g. (646) 555-0100",
         'owner_email' => "Merchant's email",
-        'owner_phone' => "Merchant's phone",
+        'number_of_locations' => 'Number of locations',
+        'new_location_yes_no' => 'Yes or No',
+        'submission_date_time' => 'Date and time submitted',
+        'submission_link' => 'Admin portal page with the files',
+        'pipedrive_deal_link' => 'The Pipedrive deal',
     ];
 
     /**
@@ -83,9 +108,13 @@ TXT;
             'from_address' => $saved['from_address'] ?? config('mail.from.address'),
             'from_name' => $saved['from_name'] ?? (config('mail.from.name') ?: config('app.name')),
             'reply_to' => $saved['reply_to'] ?? null,
-            'bcc' => $saved['bcc'] ?? null,
             'subject' => ($saved['subject'] ?? null) ?: self::DEFAULT_SUBJECT,
             'body' => ($saved['body'] ?? null) ?: self::DEFAULT_BODY,
+            'notify_team' => (bool) ($saved['notify_team'] ?? true),
+            // "bcc" held these addresses before the team email existed
+            'team_recipients' => $saved['team_recipients'] ?? ($saved['bcc'] ?? null),
+            'team_subject' => ($saved['team_subject'] ?? null) ?: self::DEFAULT_TEAM_SUBJECT,
+            'team_body' => ($saved['team_body'] ?? null) ?: self::DEFAULT_TEAM_BODY,
             'timezone' => ($saved['timezone'] ?? null) ?: 'America/New_York',
         ];
     }
@@ -104,7 +133,7 @@ TXT;
         }
         unset($values['clear_password']);
 
-        foreach (['notify_affiliate', 'verify_peer'] as $flag) {
+        foreach (['notify_affiliate', 'notify_team', 'verify_peer'] as $flag) {
             $values[$flag] = !empty($values[$flag]) ? '1' : '0';
         }
 
@@ -119,7 +148,7 @@ TXT;
     }
 
     /** @return string[] */
-    public static function bccList(?string $value): array
+    public static function emailList(?string $value): array
     {
         return collect(preg_split('/[\s,;]+/', (string) $value))
             ->map(fn($email) => trim($email))
@@ -168,19 +197,26 @@ TXT;
     {
         $first = fn(?string $name) => strtok(trim((string) $name), ' ') ?: '';
         $affiliate = $lead->affiliate?->name;
+        $phone = preg_replace('/\D/', '', (string) $lead->phone);
 
         return [
             'affiliate_first_name' => $first($affiliate) ?: 'there',
-            'affiliate_name' => $affiliate ?: '',
+            'affiliate_full_name' => $affiliate ?: 'Direct',
+            'affiliate_name' => $affiliate ?: 'Direct',
+            'affiliate_email' => $lead->affiliate?->email ?: ($affiliate ? 'Not provided' : 'None (direct submission)'),
             'owner_full_name' => trim((string) $lead->owner_name),
             'owner_first_name' => $first($lead->owner_name),
             'business_name' => trim((string) $lead->business_name),
-            'number_of_locations' => $lead->locations
-                ? $lead->locations . ($lead->new_location ? ' (new location)' : '')
-                : 'Not provided',
-            'submission_date_time' => ($lead->created_at ?? now())->copy()->timezone($timezone)->format('M j, Y \a\t g:i A T'),
-            'owner_email' => (string) $lead->email,
+            'owner_cell_phone' => strlen($phone) === 10
+                ? sprintf('(%s) %s-%s', substr($phone, 0, 3), substr($phone, 3, 3), substr($phone, 6))
+                : (string) $lead->phone,
             'owner_phone' => (string) $lead->phone,
+            'owner_email' => (string) $lead->email,
+            'number_of_locations' => $lead->locations ? (string) $lead->locations : '1',
+            'new_location_yes_no' => $lead->new_location ? 'Yes' : 'No',
+            'submission_date_time' => ($lead->created_at ?? now())->copy()->timezone($timezone)->format('M j, Y \a\t g:i A T'),
+            'submission_link' => $lead->exists ? route('admin.leads.show', $lead) : url('/admin'),
+            'pipedrive_deal_link' => $lead->pipedriveDealUrl() ?: 'Not available',
         ];
     }
 

@@ -17,6 +17,8 @@ class Affiliate extends Model
      * Options of Pipedrive's deal "Source channel" field. Labels must match Pipedrive exactly:
      * they are looked up by name to find each option's id.
      */
+    public const DEFAULT_SOURCE_CHANNEL = 'Affiliate - MCA Broker';
+
     public const SOURCE_CHANNELS = [
         'Affiliate - MCA Broker',
         'Affiliate - Real Estate',
