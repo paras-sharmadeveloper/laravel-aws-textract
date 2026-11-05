@@ -16,8 +16,9 @@
     </div>
 
     <p class="muted" style="margin: -12px 0 24px; max-width: 720px">Live checks against each service using the
-        credentials in the server's <code>.env</code>. Tests are safe to run any time — the S3 test writes and then deletes a
-        tiny file, and nothing is created in Pipedrive.</p>
+        credentials in the server's <code>.env</code> (email settings are managed here under Configure). Tests are safe to run
+        any time — the S3 test writes and then deletes a tiny file, nothing is created in Pipedrive, and the email test signs
+        in without sending anything.</p>
 
     <div class="int-grid">
         @foreach ($integrations as $int)
@@ -60,7 +61,14 @@
                             Never tested
                         @endif
                     </span>
-                    <button type="button" class="btn btn-sm" data-role="test">Test connection</button>
+                    <div style="display: flex; gap: 8px">
+                        @if ($int['key'] === 'mail')
+                            @can('integrations.manage')
+                                <a href="{{ route('admin.integrations.mail') }}" class="btn btn-sm">Configure</a>
+                            @endcan
+                        @endif
+                        <button type="button" class="btn btn-sm" data-role="test">Test connection</button>
+                    </div>
                 </div>
             </section>
         @endforeach

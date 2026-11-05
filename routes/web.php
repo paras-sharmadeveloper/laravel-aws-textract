@@ -70,6 +70,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 ->middleware('throttle:30,1')->name('integrations.test');
         });
 
+        Route::middleware('can:integrations.manage')->group(function () {
+            Route::get('/integrations/email', [Admin\MailSettingsController::class, 'edit'])->name('integrations.mail');
+            Route::put('/integrations/email', [Admin\MailSettingsController::class, 'update'])->name('integrations.mail.update');
+            Route::post('/integrations/email/send-test', [Admin\MailSettingsController::class, 'test'])
+                ->middleware('throttle:10,1')->name('integrations.mail.test');
+        });
+
         Route::get('/account', [Admin\AccountController::class, 'edit'])->name('account');
         Route::put('/account/password', [Admin\AccountController::class, 'updatePassword'])->name('account.password');
     });

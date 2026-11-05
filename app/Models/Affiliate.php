@@ -13,7 +13,29 @@ class Affiliate extends Model
      */
     public const RESERVED_SLUGS = ['admin', 'affiliate', 'upload', 'php', 'up', 'horizon', 'login', 'logout', 'api', 'storage', 'build'];
 
-    protected $fillable = ['name', 'slug', 'email', 'phone', 'landing_content', 'is_active'];
+    /**
+     * Options of Pipedrive's deal "Source channel" field. Labels must match Pipedrive exactly:
+     * they are looked up by name to find each option's id.
+     */
+    public const SOURCE_CHANNELS = [
+        'Affiliate - MCA Broker',
+        'Affiliate - Real Estate',
+        'Affiliate - Influencer',
+        'Affiliate - Door to Door',
+        'Affiliate - Merchant',
+        'Affiliate - F&B Distributor',
+        'Affiliate - Accountant',
+        'Merchant Referral',
+        'Indeed',
+        'Zip Recruiter',
+        'Meridian Leads Email Blast',
+        'Desh Contact',
+        'Google',
+        'Claude',
+        'ChatGPT',
+    ];
+
+    protected $fillable = ['name', 'slug', 'email', 'phone', 'source_channel', 'landing_content', 'is_active'];
 
     protected function casts(): array
     {

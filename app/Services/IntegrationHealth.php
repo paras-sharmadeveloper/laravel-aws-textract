@@ -7,10 +7,12 @@ use Aws\Textract\TextractClient;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Support\MailSettings;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use OpenAI;
 
@@ -31,6 +33,7 @@ class IntegrationHealth
         'pipedrive' => ['name' => 'Pipedrive', 'role' => 'Receives leads, deals and attachments'],
         'openai' => ['name' => 'OpenAI', 'role' => 'Extracts merchant details from the documents'],
         'queue' => ['name' => 'Redis & Horizon', 'role' => 'Runs the background processing pipeline'],
+        'mail' => ['name' => 'Email (SMTP)', 'role' => 'Emails affiliates when a lead is submitted'],
     ];
 
     private const QUEUES = ['default', 'ocr', 'Parse-create-lead', 'attachments'];
@@ -46,6 +49,7 @@ class IntegrationHealth
                 'pipedrive' => $this->pipedrive(),
                 'openai' => $this->openai(),
                 'queue' => $this->queue(),
+                'mail' => $this->mail(),
             };
         } catch (\Throwable $e) {
             $result = $this->result([['Connection', false, $this->message($e)]], 'Could not connect');
@@ -100,6 +104,18 @@ class IntegrationHealth
                 'Queue driver' => config('queue.default'),
                 'Redis host' => config('database.redis.default.host') . ':' . config('database.redis.default.port'),
             ],
+            'mail' => (function () {
+                $mail = MailSettings::all();
+
+                return [
+                    'Affiliate emails' => $mail['notify_affiliate'] ? 'On' : 'Off',
+                    'SMTP server' => $mail['host'] ? $mail['host'] . ':' . $mail['port'] : null,
+                    'Encryption' => strtoupper($mail['encryption']),
+                    'Username' => $mail['username'],
+                    'Password' => $this->mask($mail['password']),
+                    'From' => $mail['from_address'] ? trim("{$mail['from_name']} <{$mail['from_address']}>") : null,
+                ];
+            })(),
         };
     }
 
@@ -226,6 +242,33 @@ class IntegrationHealth
         $model = $client->models()->retrieve('gpt-4o-mini');
 
         return $this->result([['API key & model', true, "Model {$model->id} is available"]], 'Connected');
+    }
+
+    private function mail(): array
+    {
+        $settings = MailSettings::all();
+
+        if (!MailSettings::configured($settings)) {
+            return $this->result([['Settings', false, 'SMTP host, port or "from" address is not set']], 'Not configured');
+        }
+
+        MailSettings::apply($settings);
+        $transport = Mail::mailer('smtp')->getSymfonyTransport();
+
+        $checks = [];
+        // start() connects, negotiates TLS and logs in, so it proves the credentials without sending mail
+        $checks[] = $this->step('Connect & sign in', function () use ($transport, $settings) {
+            $transport->start();
+            $transport->stop();
+
+            return "Signed in to {$settings['host']}:{$settings['port']}" . ($settings['username'] ? " as {$settings['username']}" : '');
+        });
+
+        $checks[] = $settings['notify_affiliate']
+            ? ['label' => 'Affiliate emails', 'ok' => true, 'detail' => 'Sent when a lead is submitted through an affiliate link']
+            : ['label' => 'Affiliate emails', 'ok' => null, 'detail' => 'Turned off in the email settings'];
+
+        return $this->result($checks, 'Connected to ' . $settings['host']);
     }
 
     private function queue(): array

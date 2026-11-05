@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Services\S3Service;
@@ -221,7 +222,7 @@ class PipedriveService
     | DEAL
     |--------------------------------------------------------------------------
     */
-    public function createDeal(array $data, $personId, $orgId, $affiliatePersonId = null)
+    public function createDeal(array $data, $personId, $orgId, $affiliatePersonId = null, ?Affiliate $affiliate = null)
     {
         $title = ($data['business_name'] ?? $data['email'] ?? 'New Lead');
 
@@ -242,7 +243,53 @@ class PipedriveService
             $payload[self::AFFILIATE_DEAL_FIELD] = $affiliatePersonId;
         }
 
-        return $this->request('post', '/deals', $payload)['id'];
+        return $this->request('post', '/deals', $payload + $this->sourceFields($affiliate))['id'];
+    }
+
+    /**
+     * Deal "Source channel" (an option id) and "Source channel ID" (the affiliate's form link).
+     */
+    public function sourceFields(?Affiliate $affiliate): array
+    {
+        if (!$affiliate) {
+            return [];
+        }
+
+        $fields = ['channel_id' => $affiliate->link()];
+
+        if (filled($affiliate->source_channel) && $optionId = $this->channelOptionId($affiliate->source_channel)) {
+            $fields['channel'] = $optionId;
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Pipedrive stores the channel as an option id, so map the label to it. The options
+     * are cached for a day; a failed lookup only drops the channel from the deal.
+     */
+    public function channelOptionId(string $label): ?int
+    {
+        try {
+            $options = Cache::remember('pipedrive:deal-channel-options', now()->addDay(), function () {
+                $field = collect($this->request('get', '/dealFields', ['limit' => 500]) ?? [])->firstWhere('key', 'channel');
+
+                return collect($field['options'] ?? [])->mapWithKeys(fn($o) => [Str::lower(trim($o['label'])) => $o['id']])->all();
+            });
+        } catch (\Throwable $e) {
+            Log::warning('Pipedrive source channel lookup failed', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+
+        $id = $options[Str::lower(trim($label))] ?? null;
+
+        if (!$id) {
+            Log::warning('Pipedrive has no source channel option with this label', ['label' => $label]);
+            Cache::forget('pipedrive:deal-channel-options');
+        }
+
+        return $id ? (int) $id : null;
     }
 
     /*
@@ -365,7 +412,7 @@ class PipedriveService
         }
 
         $affiliatePersonId = $affiliate ? $this->affiliatePersonId($affiliate) : null;
-        $dealId = $this->createDeal($data, $personId, $orgId, $affiliatePersonId);
+        $dealId = $this->createDeal($data, $personId, $orgId, $affiliatePersonId, $affiliate);
 
         $uploaded = [];
 

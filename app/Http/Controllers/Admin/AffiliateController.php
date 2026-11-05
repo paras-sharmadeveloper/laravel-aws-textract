@@ -123,6 +123,7 @@ class AffiliateController extends Controller
             ],
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:30',
+            'source_channel' => ['nullable', Rule::in(Affiliate::SOURCE_CHANNELS)],
         ], [
             'slug.regex' => 'The link may only contain lowercase letters, numbers and dashes.',
             'slug.not_in' => 'That link name is reserved by the system.',

@@ -23,7 +23,8 @@
         <label for="email">Contact email <span class="muted">(optional)</span></label>
         <input id="email" name="email" type="email" class="input" value="{{ old('email', $affiliate?->email) }}"
             placeholder="john@example.com">
-        <span class="help">Shown on their application and landing pages and used for the "Contact" button.</span>
+        <span class="help">Shown on their application and landing pages, used for the "Contact" button, and where
+            new-lead emails are sent.</span>
         @error('email')
             <span class="error-text">{{ $message }}</span>
         @enderror
@@ -34,6 +35,20 @@
             placeholder="(555) 555-0100">
         <span class="help">Shown on their application and landing pages.</span>
         @error('phone')
+            <span class="error-text">{{ $message }}</span>
+        @enderror
+    </div>
+    <div class="field">
+        <label for="source_channel">Pipedrive source channel</label>
+        <select id="source_channel" name="source_channel" class="input">
+            <option value="">Not set</option>
+            @foreach (\App\Models\Affiliate::SOURCE_CHANNELS as $channel)
+                <option value="{{ $channel }}" @selected(old('source_channel', $affiliate?->source_channel) === $channel)>{{ $channel }}</option>
+            @endforeach
+        </select>
+        <span class="help">Set as "Source channel" on every deal from this affiliate. "Source channel ID" is set to
+            their application link.</span>
+        @error('source_channel')
             <span class="error-text">{{ $message }}</span>
         @enderror
     </div>

@@ -18,6 +18,7 @@ class Role extends Model
         'leads.delete' => 'Delete and restore leads',
         'affiliates.manage' => 'Create, edit and delete affiliates',
         'integrations.view' => 'View and test integrations',
+        'integrations.manage' => 'Change email (SMTP) settings',
         'horizon.view' => 'Open the Horizon queue monitor',
         'users.manage' => 'Manage users, roles and permissions',
     ];
