@@ -20,7 +20,7 @@ class MailSettings
         'none' => 'None (not recommended)',
     ];
 
-    public const DEFAULT_SUBJECT = 'New submission received: {{business_name}}';
+    public const DEFAULT_SUBJECT = 'New Submission Received: {{business_name}}';
 
     public const DEFAULT_BODY = <<<'TXT'
 Hi {{affiliate_first_name}},
@@ -42,7 +42,7 @@ TXT;
     public const DEFAULT_TEAM_SUBJECT = 'New Submission: {{business_name}} ({{number_of_locations}} locations) via {{affiliate_full_name}}';
 
     public const DEFAULT_TEAM_BODY = <<<'TXT'
-New submission received. Same-day response required.
+New Submission Received. Same-day response required.
 
 AFFILIATE
 Name: {{affiliate_full_name}}
