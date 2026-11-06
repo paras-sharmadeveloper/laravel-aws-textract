@@ -78,7 +78,7 @@
                                 </td>
                                 <td>
                                     <div>{{ $lead->email }}</div>
-                                    <div class="muted small">+1 {{ $lead->phone }}</div>
+                                    <div class="muted small">{{ \App\Support\Phone::display($lead->phone) }}</div>
                                 </td>
                                 <td>{{ $lead->affiliate?->name ?? '—' }}</td>
                                 <td>{{ $lead->documents_count }}</td>

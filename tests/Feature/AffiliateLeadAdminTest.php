@@ -329,7 +329,7 @@ class AffiliateLeadAdminTest extends TestCase
         $this->get('/janedoe')
             ->assertOk()
             ->assertSee('href="mailto:jane@example.com"', false)
-            ->assertSee('href="tel:5555550100"', false)
+            ->assertSee('href="tel:+15555550100"', false)
             ->assertSee('(555) 555-0100');
     }
 
@@ -443,7 +443,7 @@ class AffiliateLeadAdminTest extends TestCase
 
         $this->get('/affiliate/janedoe')
             ->assertOk()
-            ->assertSeeInOrder(['hero-cta', 'href="tel:5555550100"', '(555) 555-0100', 'href="mailto:jane@example.com"', 'jane@example.com', 'hero-sub'], false);
+            ->assertSeeInOrder(['hero-cta', 'href="tel:+15555550100"', '(555) 555-0100', 'href="mailto:jane@example.com"', 'jane@example.com', 'hero-sub'], false);
     }
 
     public function test_landing_page_leaves_out_missing_contact_details(): void
@@ -452,7 +452,7 @@ class AffiliateLeadAdminTest extends TestCase
         Affiliate::create(['name' => 'Sam Lee', 'slug' => 'samlee']);
 
         $this->get('/affiliate/janedoe')
-            ->assertSee('href="tel:5555550100"', false)
+            ->assertSee('href="tel:+15555550100"', false)
             ->assertSee('hero-contact', false)
             ->assertDontSee('mailto:jane', false);
 

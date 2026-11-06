@@ -154,7 +154,7 @@
                     <dt>Email</dt>
                     <dd><a href="mailto:{{ $lead->email }}">{{ $lead->email }}</a></dd>
                     <dt>Phone</dt>
-                    <dd><a href="tel:+1{{ $lead->phone }}">+1 {{ $lead->phone }}</a></dd>
+                    <dd><a href="tel:{{ \App\Support\Phone::tel($lead->phone) }}">{{ \App\Support\Phone::display($lead->phone) }}</a></dd>
                     <dt>Locations</dt>
                     <dd>{{ $lead->locations ?: '—' }}</dd>
                     <dt>New location</dt>

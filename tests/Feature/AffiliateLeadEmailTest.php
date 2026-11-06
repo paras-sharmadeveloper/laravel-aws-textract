@@ -305,7 +305,7 @@ class AffiliateLeadEmailTest extends TestCase
                 && $mail->hasReplyTo('jhon@example.com')
                 && $mail->subjectLine === 'New Submission: Jane Bakery (3 locations) via Jhon Rocha'
                 && str_contains($mail->bodyText, "AFFILIATE\nName: Jhon Rocha\nEmail: jhon@example.com")
-                && str_contains($mail->bodyText, "Cell: (646) 555-0100\nEmail: jane@example.com\nLocations: 3\nNew location: Yes")
+                && str_contains($mail->bodyText, "Cell: +1 (646) 555-0100\nEmail: jane@example.com\nLocations: 3\nNew location: Yes")
                 && str_contains($mail->bodyText, 'View submission and files: ' . route('admin.leads.show', $lead));
         });
         $this->assertNotNull($lead->fresh()->team_notified_at);

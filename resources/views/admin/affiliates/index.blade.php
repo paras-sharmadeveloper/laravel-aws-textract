@@ -57,7 +57,7 @@
                             <tr>
                                 <td>
                                     <div class="strong">{{ $affiliate->name }}</div>
-                                    <div class="muted small">{{ collect([$affiliate->email, $affiliate->phone])->filter()->implode(' · ') ?: 'No contact details' }}</div>
+                                    <div class="muted small">{{ collect([$affiliate->email, $affiliate->phone ? \App\Support\Phone::display($affiliate->phone) : null])->filter()->implode(' · ') ?: 'No contact details' }}</div>
                                 </td>
                                 <td style="max-width: 340px">
                                     <div class="muted small">Landing page</div>

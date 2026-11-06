@@ -21,7 +21,7 @@
         $contactHref = $affiliate?->email
             ? 'mailto:' . $affiliate->email
             : ($affiliate?->phone
-                ? 'tel:' . preg_replace('/[^0-9+]/', '', $affiliate->phone)
+                ? 'tel:' . \App\Support\Phone::tel($affiliate->phone)
                 : 'mailto:info@dpspayments.com');
     @endphp
 
@@ -65,13 +65,13 @@
                         </a>
                     @endif
                     @if ($affiliate->phone)
-                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $affiliate->phone) }}">
+                        <a href="tel:{{ \App\Support\Phone::tel($affiliate->phone) }}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path
                                     d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2">
                                 </path>
-                            </svg>{{ $affiliate->phone }}
+                            </svg>{{ \App\Support\Phone::display($affiliate->phone) }}
                         </a>
                     @endif
                 </div>
@@ -489,11 +489,11 @@
                 <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" class="footer-logo">
             </div>
             @php
-                $footerPhone = $affiliate?->phone ?: '(646) 825-4477';
+                $footerPhone = $affiliate?->phone ?: \App\Support\Phone::COMPANY;
                 $footerEmail = $affiliate?->email ?: 'info@dpspayments.com';
             @endphp
             <div class="footer-contact"><a
-                    href="tel:{{ preg_replace('/[^0-9+]/', '', $footerPhone) }}">{{ $footerPhone }}</a> · <a
+                    href="tel:{{ \App\Support\Phone::tel($footerPhone) }}">{{ \App\Support\Phone::display($footerPhone) }}</a> · <a
                     href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a></div>
         </div>
         <p>DPS Payments is a capital advisory and funding facilitation firm. Amounts, pricing, approval, and timing are

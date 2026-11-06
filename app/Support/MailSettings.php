@@ -68,7 +68,7 @@ TXT;
         'owner_full_name' => "Merchant's full name",
         'owner_first_name' => "Merchant's first name",
         'business_name' => 'Business name (DBA)',
-        'owner_cell_phone' => "Merchant's cell, e.g. (646) 555-0100",
+        'owner_cell_phone' => "Merchant's cell, e.g. +1 (646) 555-0100",
         'owner_email' => "Merchant's email",
         'number_of_locations' => 'Number of locations',
         'new_location_yes_no' => 'Yes or No',
@@ -197,7 +197,6 @@ TXT;
     {
         $first = fn(?string $name) => strtok(trim((string) $name), ' ') ?: '';
         $affiliate = $lead->affiliate?->name;
-        $phone = preg_replace('/\D/', '', (string) $lead->phone);
 
         return [
             'affiliate_first_name' => $first($affiliate) ?: 'there',
@@ -207,10 +206,8 @@ TXT;
             'owner_full_name' => trim((string) $lead->owner_name),
             'owner_first_name' => $first($lead->owner_name),
             'business_name' => trim((string) $lead->business_name),
-            'owner_cell_phone' => strlen($phone) === 10
-                ? sprintf('(%s) %s-%s', substr($phone, 0, 3), substr($phone, 3, 3), substr($phone, 6))
-                : (string) $lead->phone,
-            'owner_phone' => (string) $lead->phone,
+            'owner_cell_phone' => Phone::display($lead->phone),
+            'owner_phone' => Phone::display($lead->phone),
             'owner_email' => (string) $lead->email,
             'number_of_locations' => $lead->locations ? (string) $lead->locations : '1',
             'new_location_yes_no' => $lead->new_location ? 'Yes' : 'No',
