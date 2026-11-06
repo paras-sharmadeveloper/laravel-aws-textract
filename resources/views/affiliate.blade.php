@@ -52,7 +52,8 @@
 
             <div class="video">
                 @if ($video && $video['type'] === 'vidalytics')
-                    <div id="vidalytics_embed_{{ $video['id'] }}" style="width: 100%; position: relative; padding-top: 56.25%;"></div>
+                    <div id="vidalytics_embed_{{ $video['id'] }}"
+                        style="width: 100%; position: relative; padding-top: 56.25%;"></div>
                     <script>
                         (function(v, i, d, a, l, y, t, c, s) {
                             y = '_' + d.toLowerCase();
@@ -134,8 +135,9 @@
                     <div class="hero-contact">
                         @if ($affiliate->phone)
                             <a href="tel:{{ \App\Support\Phone::tel($affiliate->phone) }}">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" aria-hidden="true">
                                     <path
                                         d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2">
                                     </path>
@@ -144,8 +146,9 @@
                         @endif
                         @if ($affiliate->email)
                             <a href="mailto:{{ $affiliate->email }}">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" aria-hidden="true">
                                     <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                                     <path d="M3 7l9 6 9-6"></path>
                                 </svg>{{ $affiliate->email }}
@@ -292,7 +295,8 @@
                 @if ($footerPhone || $footerEmail)
                     <div class="footer-contact">
                         @if ($footerPhone)
-                            <a href="tel:{{ \App\Support\Phone::tel($footerPhone) }}">{{ \App\Support\Phone::display($footerPhone) }}</a>
+                            <a
+                                href="tel:{{ \App\Support\Phone::tel($footerPhone) }}">{{ \App\Support\Phone::display($footerPhone) }}</a>
                         @endif
                         @if ($footerPhone && $footerEmail)
                             ·
@@ -303,10 +307,10 @@
                     </div>
                 @endif
             </div>
-            <p>DPS Payments is an all-in-one payment processing and growth capital company for restaurants and bars.
+            {{-- <p>DPS Payments is an all-in-one payment processing and growth capital company for restaurants and bars.
                 Payment processing and funding are provided through our sponsor banks and partner network under
                 separate agreements. Amounts, pricing, approval and timing are determined by our partners and are not
-                guaranteed.</p>
+                guaranteed.</p> --}}
             <div class="copy">© {{ date('Y') }} DPS Payments. All rights reserved.</div>
         </div>
     </footer>
