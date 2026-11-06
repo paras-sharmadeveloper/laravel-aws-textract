@@ -28,7 +28,7 @@
     <header class="site-header">
         <div class="brand-wrap">
             <a href="{{ $affiliate ? url($affiliate->slug) : url('/') }}" class="brand"
-                aria-label="DPS Payments Corp.">
+                aria-label="DPS Payments">
                 <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" class="brand-logo">
             </a>
             <div class="v-rule"></div>

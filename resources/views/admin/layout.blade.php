@@ -26,8 +26,8 @@
         <aside class="sidebar" id="sidebar">
             <div class="side-top">
                 <a href="{{ route('admin.leads.index') }}" class="side-brand" aria-label="DPS Payments admin">
-                    <img src="{{ asset('images/dps-logo-light.png') }}" alt="DPS Payments Corp." class="logo-full">
-                    <img src="{{ asset('images/dps-mark-light.png') }}" alt="DPS" class="logo-mark">
+                    <img src="{{ asset('images/dps-payments-logo-light.png') }}" alt="DPS Payments" class="logo-full">
+                    <img src="{{ asset('images/dps-payments-mark-light.png') }}" alt="DPS" class="logo-mark">
                 </a>
                 <button type="button" class="collapse-btn" id="collapseBtn" aria-label="Collapse sidebar"
                     aria-controls="sidebar" aria-expanded="true">

@@ -16,8 +16,8 @@
 
 <body>
     <header>
-        <a href="{{ url('/') }}" class="brand" aria-label="DPS Payments Corp.">
-            <img src="{{ asset('images/dps-logo.png') }}" alt="DPS Payments Corp." width="104">
+        <a href="{{ url('/') }}" class="brand" aria-label="DPS Payments">
+            <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" width="104">
         </a>
     </header>
 

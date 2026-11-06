@@ -30,7 +30,7 @@
 
     <header class="site-header">
         <div class="wrap">
-            <a href="{{ $affiliate->landingLink() }}" aria-label="DPS Payments Corp.">
+            <a href="{{ $affiliate->landingLink() }}" aria-label="DPS Payments">
                 <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" class="brand-logo">
             </a>
             <nav class="site-nav" aria-label="Page sections">
@@ -116,7 +116,7 @@
                         @if ($videoPoster) poster="{{ $videoPoster }}" @endif></video>
                 @else
                     <div class="video-brand">
-                        <img src="{{ asset('images/dps-logo-light.png') }}" alt="">
+                        <img src="{{ asset('images/dps-payments-logo-light.png') }}" alt="">
                     </div>
                 @endif
             </div>

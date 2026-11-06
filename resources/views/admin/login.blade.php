@@ -18,7 +18,7 @@
     <form class="card" method="POST" action="{{ route('admin.login') }}">
         @csrf
         <div class="brand">
-            <img src="{{ asset('images/dps-logo.png') }}" alt="DPS Payments Corp." width="124">
+            <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" width="124">
             <span>ADMIN</span>
         </div>
         <h1>Welcome <em>back.</em></h1>
