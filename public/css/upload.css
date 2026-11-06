@@ -1155,6 +1155,7 @@ input::placeholder {
     font-size: 14px;
     line-height: 1.6;
     color: var(--ink-2);
+    text-align: center;
 }
 
 /* ---------- Responsive ---------- */

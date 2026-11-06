@@ -668,6 +668,7 @@ p {
 .copy {
     margin-top: 18px;
     font-size: 13px;
+    text-align: center;
 }
 
 @media (max-width: 960px) {
