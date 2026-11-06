@@ -486,8 +486,7 @@
     <footer class="site-footer">
         <div class="footer-top">
             <div class="footer-brand">
-                <strong>DPS<i>.</i></strong>
-                <span>PAYMENTS · CAPITAL ADVISORY</span>
+                <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" class="footer-logo">
             </div>
             <div class="footer-contact"><a href="tel:+16468254477">(646) 825-4477</a> · <a
                     href="mailto:info@dpspayments.com">info@dpspayments.com</a></div>

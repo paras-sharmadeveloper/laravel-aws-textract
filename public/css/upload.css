@@ -1120,6 +1120,12 @@ input::placeholder {
     flex-wrap: wrap;
 }
 
+.footer-logo {
+    display: block;
+    width: 160px;
+    height: auto;
+}
+
 .footer-brand strong {
     font-family: var(--serif);
     font-weight: 400;
