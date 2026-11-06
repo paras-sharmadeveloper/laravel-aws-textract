@@ -29,7 +29,7 @@
         <div class="brand-wrap">
             <a href="{{ $affiliate ? url($affiliate->slug) : url('/') }}" class="brand"
                 aria-label="DPS Payments Corp.">
-                <img src="{{ asset('images/dps-logo.png') }}" alt="DPS Payments Corp." class="brand-logo">
+                <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" class="brand-logo">
             </a>
             <div class="v-rule"></div>
             <div class="secure">

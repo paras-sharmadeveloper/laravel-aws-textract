@@ -31,7 +31,7 @@
     <header class="site-header">
         <div class="wrap">
             <a href="{{ $affiliate->landingLink() }}" aria-label="DPS Payments Corp.">
-                <img src="{{ asset('images/dps-logo.png') }}" alt="DPS Payments Corp." class="brand-logo">
+                <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" class="brand-logo">
             </a>
             <nav class="site-nav" aria-label="Page sections">
                 <a href="#watch">{{ $c['nav_watch'] }}</a>
