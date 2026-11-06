@@ -459,6 +459,30 @@ class AffiliateLeadAdminTest extends TestCase
         $this->get('/affiliate/samlee')->assertDontSee('hero-contact', false);
     }
 
+    public function test_footer_shows_company_contact_only_without_an_affiliate(): void
+    {
+        Affiliate::create(['name' => 'Jane Doe', 'slug' => 'janedoe', 'email' => 'jane@example.com']);
+        Affiliate::create(['name' => 'Sam Lee', 'slug' => 'samlee']);
+
+        $this->get('/')
+            ->assertSee('<a href="tel:+16468254477">+1 (646) 825-4477</a>', false)
+            ->assertSee('<a href="mailto:info@dpspayments.com">info@dpspayments.com</a>', false);
+
+        foreach (['/janedoe', '/affiliate/janedoe'] as $page) {
+            $this->get($page)
+                ->assertSee('<a href="mailto:jane@example.com">jane@example.com</a>', false)
+                ->assertDontSee('825-4477')
+                ->assertDontSee('info@dpspayments.com');
+        }
+
+        foreach (['/samlee', '/affiliate/samlee'] as $page) {
+            $this->get($page)
+                ->assertDontSee('footer-contact', false)
+                ->assertDontSee('825-4477')
+                ->assertDontSee('info@dpspayments.com');
+        }
+    }
+
     public function test_landing_page_404s_for_unknown_or_disabled_affiliates(): void
     {
         Affiliate::create(['name' => 'Off', 'slug' => 'off', 'is_active' => false]);

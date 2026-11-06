@@ -22,7 +22,7 @@
             ? 'mailto:' . $affiliate->email
             : ($affiliate?->phone
                 ? 'tel:' . \App\Support\Phone::tel($affiliate->phone)
-                : 'mailto:info@dpspayments.com');
+                : ($affiliate ? null : 'mailto:info@dpspayments.com'));
     @endphp
 
     <header class="site-header">
@@ -41,10 +41,12 @@
                 <span>Secure application</span>
             </div>
         </div>
-        <div class="header-contact">
-            <span>Questions?</span>
-            <a href="{{ $contactHref }}" class="pill-btn">Contact {{ $affiliate?->name ?? 'us' }}</a>
-        </div>
+        @if ($contactHref)
+            <div class="header-contact">
+                <span>Questions?</span>
+                <a href="{{ $contactHref }}" class="pill-btn">Contact {{ $affiliate?->name ?? 'us' }}</a>
+            </div>
+        @endif
     </header>
 
     <section class="hero">
@@ -489,12 +491,24 @@
                 <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" class="footer-logo">
             </div>
             @php
-                $footerPhone = $affiliate?->phone ?: \App\Support\Phone::COMPANY;
-                $footerEmail = $affiliate?->email ?: 'info@dpspayments.com';
+                // Affiliate traffic shows only the affiliate's own details; the company
+                // phone and email are used only when there is no affiliate.
+                $footerPhone = $affiliate ? $affiliate->phone : \App\Support\Phone::COMPANY;
+                $footerEmail = $affiliate ? $affiliate->email : 'info@dpspayments.com';
             @endphp
-            <div class="footer-contact"><a
-                    href="tel:{{ \App\Support\Phone::tel($footerPhone) }}">{{ \App\Support\Phone::display($footerPhone) }}</a> · <a
-                    href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a></div>
+            @if ($footerPhone || $footerEmail)
+                <div class="footer-contact">
+                    @if ($footerPhone)
+                        <a href="tel:{{ \App\Support\Phone::tel($footerPhone) }}">{{ \App\Support\Phone::display($footerPhone) }}</a>
+                    @endif
+                    @if ($footerPhone && $footerEmail)
+                        ·
+                    @endif
+                    @if ($footerEmail)
+                        <a href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a>
+                    @endif
+                </div>
+            @endif
         </div>
         <p>DPS Payments is a capital advisory and funding facilitation firm. Amounts, pricing, approval, and timing are
             determined by the provider in its sole discretion and are not guaranteed. Your documents are encrypted and

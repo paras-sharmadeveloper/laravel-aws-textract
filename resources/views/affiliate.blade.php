@@ -284,12 +284,24 @@
                     <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" class="footer-logo">
                 </div>
                 @php
-                    $footerPhone = $affiliate->phone ?: \App\Support\Phone::COMPANY;
-                    $footerEmail = $affiliate->email ?: 'info@dpspayments.com';
+                    // Affiliate traffic shows only the affiliate's own details; the company
+                    // phone and email are used only when there is no affiliate.
+                    $footerPhone = $affiliate ? $affiliate->phone : \App\Support\Phone::COMPANY;
+                    $footerEmail = $affiliate ? $affiliate->email : 'info@dpspayments.com';
                 @endphp
-                <div class="footer-contact"><a
-                        href="tel:{{ \App\Support\Phone::tel($footerPhone) }}">{{ \App\Support\Phone::display($footerPhone) }}</a> · <a
-                        href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a></div>
+                @if ($footerPhone || $footerEmail)
+                    <div class="footer-contact">
+                        @if ($footerPhone)
+                            <a href="tel:{{ \App\Support\Phone::tel($footerPhone) }}">{{ \App\Support\Phone::display($footerPhone) }}</a>
+                        @endif
+                        @if ($footerPhone && $footerEmail)
+                            ·
+                        @endif
+                        @if ($footerEmail)
+                            <a href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a>
+                        @endif
+                    </div>
+                @endif
             </div>
             <p>DPS Payments is an all-in-one payment processing and growth capital company for restaurants and bars.
                 Payment processing and funding are provided through our sponsor banks and partner network under
