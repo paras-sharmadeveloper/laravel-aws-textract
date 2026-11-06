@@ -632,6 +632,12 @@ p {
     gap: 14px;
 }
 
+.footer-logo {
+    display: block;
+    width: 160px;
+    height: auto;
+}
+
 .footer-brand strong {
     font-family: var(--serif);
     font-size: 30px;

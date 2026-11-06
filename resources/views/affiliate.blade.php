@@ -281,11 +281,15 @@
         <div class="wrap">
             <div class="footer-top">
                 <div class="footer-brand">
-                    <strong>DPS<i>.</i></strong>
-                    <span>CAPITAL · PAYMENT PROCESSING</span>
+                    <img src="{{ asset('images/dps-payments-logo.png') }}" alt="DPS Payments" class="footer-logo">
                 </div>
-                <div class="footer-contact"><a href="tel:+16468254477">(646) 825-4477</a> · <a
-                        href="mailto:info@dpspayments.com">info@dpspayments.com</a></div>
+                @php
+                    $footerPhone = $affiliate->phone ?: '(646) 825-4477';
+                    $footerEmail = $affiliate->email ?: 'info@dpspayments.com';
+                @endphp
+                <div class="footer-contact"><a
+                        href="tel:{{ preg_replace('/[^0-9+]/', '', $footerPhone) }}">{{ $footerPhone }}</a> · <a
+                        href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a></div>
             </div>
             <p>DPS Payments is an all-in-one payment processing and growth capital company for restaurants and bars.
                 Payment processing and funding are provided through our sponsor banks and partner network under
